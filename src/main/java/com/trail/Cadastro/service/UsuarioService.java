@@ -80,6 +80,7 @@ public class UsuarioService {
             log.info("Delecao de usuario bem sucedida");
         } catch (Exception e) {
             throw new RuntimeException();
+
         }
     }
 }
