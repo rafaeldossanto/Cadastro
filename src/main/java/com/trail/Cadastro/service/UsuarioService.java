@@ -4,6 +4,7 @@ import com.trail.Cadastro.entity.Usuario;
 import com.trail.Cadastro.mapper.UsuarioMapper;
 import com.trail.Cadastro.model.dto.request.UsuarioCreateRequest;
 import com.trail.Cadastro.model.dto.response.UsuarioDTO;
+import com.trail.Cadastro.model.enums.StatusCadastro;
 import com.trail.Cadastro.repository.UsuarioRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,16 +23,29 @@ public class UsuarioService {
 
     public UsuarioDTO create(UsuarioCreateRequest request) {
         try {
+            log.info("Iniciando processo de cadastro de usuario");
             Usuario find = repository.findByEmail(request.email());
             if (nonNull(find)) throw new IllegalArgumentException("Conta com esse email ja existente");
 
             Usuario usuario = UsuarioMapper.toEntity(request);
             repository.save(usuario);
+            log.info("Processo finalizado com sucesso");
             return UsuarioMapper.toResponse(usuario);
         } catch (Exception e) {
             throw new RuntimeException();
         }
     }
 
-
+    public void delete(String Id) {
+        try {
+            log.info("Iniciando processo de desativacao de usuario");
+            Usuario usuario = repository.findById(Id)
+                    .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
+            usuario.setStatus(StatusCadastro.INATIVO);
+            repository.save(usuario);
+            log.info("Delecao de usuario bem sucedida");
+        } catch (Exception e) {
+            throw new RuntimeException();
+        }
+    }
 }
