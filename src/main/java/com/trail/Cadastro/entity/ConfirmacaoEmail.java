@@ -1,5 +1,6 @@
 package com.trail.Cadastro.entity;
 
+import com.trail.Cadastro.model.enums.StatusConfirmacao;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;

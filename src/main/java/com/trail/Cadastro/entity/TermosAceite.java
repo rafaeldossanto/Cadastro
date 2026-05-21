@@ -10,7 +10,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 
 import java.time.LocalDateTime;
 
@@ -27,7 +26,6 @@ public class TermosAceite {
     @OneToOne
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
-
     private Boolean aceito;
     private @Version String versao;
     private LocalDateTime dataAceite;
