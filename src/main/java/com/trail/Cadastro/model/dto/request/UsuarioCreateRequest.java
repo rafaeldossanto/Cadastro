@@ -9,7 +9,6 @@ public record UsuarioCreateRequest(
         String email,
         String senha,
         String codigoUsuario,
-        StatusCadastro status,
         LocalDateTime dataCriacao,
         LocalDateTime dataAtualizacao
 ) {

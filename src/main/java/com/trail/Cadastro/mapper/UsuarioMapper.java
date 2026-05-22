@@ -3,6 +3,7 @@ package com.trail.Cadastro.mapper;
 import com.trail.Cadastro.entity.Usuario;
 import com.trail.Cadastro.model.dto.request.UsuarioCreateRequest;
 import com.trail.Cadastro.model.dto.response.UsuarioDTO;
+import com.trail.Cadastro.utils.GenerateUtil;
 import lombok.experimental.UtilityClass;
 
 import java.time.LocalDateTime;
@@ -15,8 +16,7 @@ public class UsuarioMapper {
                 .nome(request.nome())
                 .email(request.email())
                 .senha(request.senha())
-                .codigoUsuario(request.codigoUsuario())
-                .status(request.status())
+                .codigoUsuario(GenerateUtil.makeCode(request.nome()))
                 .dataCriacao(LocalDateTime.now())
                 .dataAtualizacao(LocalDateTime.now())
                 .build();
