@@ -21,7 +21,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 public class Usuario {
-    private @Id Long id;
+    private @Id String id;
     private String nome;
     private String email;
     private String senha;
@@ -29,8 +29,4 @@ public class Usuario {
     private @Builder.Default StatusCadastro status = StatusCadastro.PENDENTE;
     private LocalDateTime dataCriacao;
     private LocalDateTime dataAtualizacao;
-
-    @ManyToMany
-    @Builder.Default
-    private Set<Usuario> amigos = new HashSet<>();
 }

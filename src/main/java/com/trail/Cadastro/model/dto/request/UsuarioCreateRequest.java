@@ -7,9 +7,6 @@ import java.time.LocalDateTime;
 public record UsuarioCreateRequest(
         String nome,
         String email,
-        String senha,
-        String codigoUsuario,
-        LocalDateTime dataCriacao,
-        LocalDateTime dataAtualizacao
+        String senha
 ) {
 }

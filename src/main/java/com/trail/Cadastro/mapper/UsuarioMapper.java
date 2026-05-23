@@ -11,12 +11,12 @@ import java.time.LocalDateTime;
 @UtilityClass
 public class UsuarioMapper {
 
-    public Usuario toEntity(UsuarioCreateRequest request) {
+    public Usuario toEntity(UsuarioCreateRequest request, Long sequencia) {
         return Usuario.builder()
                 .nome(request.nome())
                 .email(request.email())
                 .senha(request.senha())
-                .codigoUsuario(GenerateUtil.makeCode(request.nome()))
+                .codigoUsuario(GenerateUtil.makeCode(request.nome(), sequencia))
                 .dataCriacao(LocalDateTime.now())
                 .dataAtualizacao(LocalDateTime.now())
                 .build();
