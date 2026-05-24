@@ -1,8 +1,8 @@
 package com.trail.Cadastro.worker;
 
-import com.trail.Cadastro.entity.Usuario;
+import com.trail.Cadastro.model.dto.response.UsuarioDTO;
 import com.trail.Cadastro.model.enums.StatusCadastro;
-import com.trail.Cadastro.repository.UsuarioRepository;
+import com.trail.Cadastro.service.UsuarioService;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import org.junit.jupiter.api.Test;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 class SalvarDadosWorkerTest {
 
     @Mock
-    private UsuarioRepository usuarioRepository;
+    private UsuarioService usuarioService;
 
     @Mock
     private JobClient jobClient;
@@ -34,12 +34,10 @@ class SalvarDadosWorkerTest {
     @InjectMocks
     private SalvarDadosWorker worker;
 
-    private Usuario usuarioStub() {
-        return Usuario.builder()
-                .id("id-123")
+    private UsuarioDTO usuarioDTOStub() {
+        return UsuarioDTO.builder()
                 .nome("Rafael")
                 .email("rafael@email.com")
-                .senha("senha123")
                 .codigoUsuario("rafael#1")
                 .status(StatusCadastro.PENDENTE)
                 .dataCriacao(LocalDateTime.now())
@@ -48,20 +46,19 @@ class SalvarDadosWorkerTest {
     }
 
     @Test
-    void salvarDados_deveSalvarUsuarioERetornarVariaveis() {
+    void salvarDados_deveChamarServiceERetornarVariaveis() {
         when(activatedJob.getVariablesAsMap()).thenReturn(Map.of(
                 "nome", "Rafael",
                 "email", "rafael@email.com",
                 "senha", "senha123"
         ));
-        when(usuarioRepository.proximaSequencia()).thenReturn(1L);
-        when(usuarioRepository.save(any())).thenReturn(usuarioStub());
+        when(usuarioService.create(any())).thenReturn(usuarioDTOStub());
 
         Map<String, Object> resultado = worker.salvarDados(jobClient, activatedJob);
 
         assertThat(resultado).containsKey("usuarioId");
         assertThat(resultado).containsKey("email");
         assertThat(resultado.get("email")).isEqualTo("rafael@email.com");
-        verify(usuarioRepository).save(any(Usuario.class));
+        verify(usuarioService).create(any());
     }
 }

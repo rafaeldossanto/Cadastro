@@ -1,9 +1,8 @@
 package com.trail.Cadastro.worker;
 
-import com.trail.Cadastro.entity.Usuario;
-import com.trail.Cadastro.mapper.UsuarioMapper;
 import com.trail.Cadastro.model.dto.request.UsuarioCreateRequest;
-import com.trail.Cadastro.repository.UsuarioRepository;
+import com.trail.Cadastro.model.dto.response.UsuarioDTO;
+import com.trail.Cadastro.service.UsuarioService;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.annotation.JobWorker;
@@ -18,28 +17,26 @@ import java.util.Map;
 @Slf4j
 public class SalvarDadosWorker {
 
-    private final UsuarioRepository usuarioRepository;
+    private final UsuarioService service;
 
     @JobWorker(type = "salvar-dados")
     public Map<String, Object> salvarDados(JobClient client, ActivatedJob job) {
         log.info("[WORKER] Iniciando salvar-dados");
 
         Map<String, Object> variables = job.getVariablesAsMap();
-        String nome = (String) variables.get("nome");
-        String email = (String) variables.get("email");
-        String senha = (String) variables.get("senha");
+        UsuarioCreateRequest request = new UsuarioCreateRequest(
+                (String) variables.get("nome"),
+                (String) variables.get("email"),
+                (String) variables.get("senha")
+        );
 
-        UsuarioCreateRequest request = new UsuarioCreateRequest(nome, email, senha);
+        UsuarioDTO usuario = service.create(request);
 
-        Long sequencia = usuarioRepository.proximaSequencia();
-        Usuario usuario = UsuarioMapper.toEntity(request, sequencia);
-        usuarioRepository.save(usuario);
-
-        log.info("[WORKER] Usuario salvo com id: {}", usuario.getId());
+        log.info("[WORKER] Usuario salvo com codigo: {}", usuario.codigoUsuario());
 
         return Map.of(
-                "usuarioId", usuario.getId(),
-                "email", usuario.getEmail()
+                "usuarioId", usuario.codigoUsuario(),
+                "email", usuario.email()
         );
     }
 }

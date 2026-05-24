@@ -1,8 +1,6 @@
 package com.trail.Cadastro.worker;
 
-import com.trail.Cadastro.entity.Usuario;
-import com.trail.Cadastro.model.enums.StatusCadastro;
-import com.trail.Cadastro.repository.UsuarioRepository;
+import com.trail.Cadastro.service.UsuarioService;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.annotation.JobWorker;
@@ -17,7 +15,7 @@ import java.util.Map;
 @Slf4j
 public class LiberacaoContaWorker {
 
-    private final UsuarioRepository usuarioRepository;
+    private final UsuarioService service;
 
     @JobWorker(type = "liberacao-conta")
     public void liberarConta(JobClient client, ActivatedJob job) {
@@ -26,11 +24,7 @@ public class LiberacaoContaWorker {
         Map<String, Object> variables = job.getVariablesAsMap();
         String usuarioId = (String) variables.get("usuarioId");
 
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new RuntimeException("Usuario nao encontrado: " + usuarioId));
-
-        usuario.setStatus(StatusCadastro.ATIVO);
-        usuarioRepository.save(usuario);
+        service.ativar(usuarioId);
 
         log.info("[WORKER] Conta liberada para usuario: {}", usuarioId);
     }

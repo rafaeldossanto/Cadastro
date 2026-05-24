@@ -1,10 +1,6 @@
 package com.trail.Cadastro.worker;
 
-import com.trail.Cadastro.entity.Usuario;
-import com.trail.Cadastro.model.enums.StatusCadastro;
-import com.trail.Cadastro.repository.ConfirmacaoEmailRepository;
-import com.trail.Cadastro.repository.TermosAceiteRepository;
-import com.trail.Cadastro.repository.UsuarioRepository;
+import com.trail.Cadastro.service.UsuarioService;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.annotation.JobWorker;
@@ -19,9 +15,7 @@ import java.util.Map;
 @Slf4j
 public class DelecaoDadosWorker {
 
-    private final UsuarioRepository usuarioRepository;
-    private final ConfirmacaoEmailRepository confirmacaoEmailRepository;
-    private final TermosAceiteRepository termosAceiteRepository;
+    private final UsuarioService service;
 
     @JobWorker(type = "delecao-dados")
     public void deletarDados(JobClient client, ActivatedJob job) {
@@ -30,17 +24,8 @@ public class DelecaoDadosWorker {
         Map<String, Object> variables = job.getVariablesAsMap();
         String usuarioId = (String) variables.get("usuarioId");
 
+        service.delete(usuarioId);
 
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new RuntimeException("Usuario nao encontrado: " + usuarioId));
-
-        if (StatusCadastro.PENDENTE.equals(usuario.getStatus())) {
-            confirmacaoEmailRepository.deleteByUsuarioId(usuarioId);
-            termosAceiteRepository.deleteByUsuarioId(usuarioId);
-            usuarioRepository.delete(usuario);
-            log.info("[WORKER] Dados deletados por timeout para usuario: {}", usuarioId);
-        } else {
-            log.info("[WORKER] Usuario ja ativo, delecao ignorada: {}", usuarioId);
-        }
+        log.info("[WORKER] Dados deletados por timeout para usuario: {}", usuarioId);
     }
 }
