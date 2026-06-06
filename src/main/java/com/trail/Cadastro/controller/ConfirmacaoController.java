@@ -22,9 +22,8 @@ public class ConfirmacaoController {
     }
 
     @PostMapping("/aceitar-termos")
-    public String aceitarTermos(@RequestParam String usuarioId,
-                                @RequestParam String versaoTermos) {
-        confirmacaoService.aceitarTermos(usuarioId, versaoTermos);
+    public String aceitarTermos(@RequestParam String usuarioId) {
+        confirmacaoService.aceitarTermos(usuarioId);
         return "Termos aceitos com sucesso";
     }
 }

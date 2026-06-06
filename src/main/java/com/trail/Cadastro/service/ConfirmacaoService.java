@@ -31,7 +31,7 @@ public class ConfirmacaoService {
         ConfirmacaoEmail confirmacao = confirmacaoRepository.findByToken(token)
                 .orElseThrow(() -> new IllegalArgumentException("Token invalido"));
 
-        if (confirmacao.getStatus() == StatusConfirmacao.CONFIRMADO) {
+        if (StatusConfirmacao.CONFIRMADO.equals(confirmacao.getStatus())) {
             throw new IllegalArgumentException("Email ja confirmado");
         }
 
@@ -54,7 +54,7 @@ public class ConfirmacaoService {
         log.info("Email confirmado para usuario: {}", confirmacao.getUsuario().getId());
     }
 
-    public void aceitarTermos(String usuarioId, String versaoTermos) {
+    public void aceitarTermos(String usuarioId) {
         log.info("Aceitando termos para usuario: {}", usuarioId);
 
         Usuario usuario = usuarioRepository.findById(usuarioId)
