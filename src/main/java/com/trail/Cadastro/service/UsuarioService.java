@@ -3,7 +3,7 @@ package com.trail.Cadastro.service;
 import com.trail.Cadastro.entity.Usuario;
 import com.trail.Cadastro.mapper.UsuarioMapper;
 import com.trail.Cadastro.model.dto.request.UsuarioCreateRequest;
-import com.trail.Cadastro.model.dto.request.UsuarioUpdateReuqest;
+import com.trail.Cadastro.model.dto.request.UsuarioUpdateRequest;
 import com.trail.Cadastro.model.dto.response.UsuarioDTO;
 import com.trail.Cadastro.model.enums.StatusCadastro;
 import com.trail.Cadastro.repository.UsuarioRepository;
@@ -33,7 +33,7 @@ public class UsuarioService {
         return UsuarioMapper.toResponse(usuario);
     }
 
-    public UsuarioDTO update(UsuarioUpdateReuqest request, String id) {
+    public UsuarioDTO update(UsuarioUpdateRequest request, String id) {
         log.info("Iniciando processo de atualizacao de usuario");
         Usuario usuario = repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));

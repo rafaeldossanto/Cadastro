@@ -32,10 +32,10 @@ public class SalvarDadosWorker {
 
         UsuarioDTO usuario = service.create(request);
 
-        log.info("[WORKER] Usuario salvo com codigo: {}", usuario.codigoUsuario());
+        log.info("[WORKER] Usuario salvo com id: {} e codigo: {}", usuario.id(), usuario.codigoUsuario());
 
         return Map.of(
-                "usuarioId", usuario.codigoUsuario(),
+                "usuarioId", usuario.id(),
                 "email", usuario.email()
         );
     }

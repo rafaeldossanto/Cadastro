@@ -1,7 +1,7 @@
 package com.trail.Cadastro.controller;
 
 import com.trail.Cadastro.model.dto.request.UsuarioCreateRequest;
-import com.trail.Cadastro.model.dto.request.UsuarioUpdateReuqest;
+import com.trail.Cadastro.model.dto.request.UsuarioUpdateRequest;
 import com.trail.Cadastro.model.dto.response.UsuarioDTO;
 import com.trail.Cadastro.model.enums.StatusCadastro;
 import com.trail.Cadastro.service.UsuarioService;
@@ -10,8 +10,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
 
@@ -31,10 +29,9 @@ class UsuarioControllerTest {
     @InjectMocks
     private UsuarioController controller;
 
-    // ---- stubs ----
-
     private UsuarioDTO usuarioDTOStub() {
         return UsuarioDTO.builder()
+                .id("id-123")
                 .nome("Rafael")
                 .email("rafael@email.com")
                 .codigoUsuario("rafael#1")
@@ -44,58 +41,46 @@ class UsuarioControllerTest {
                 .build();
     }
 
-    // ---- create ----
-
     @Test
-    void create_deveRetornar201_quandoSucesso() {
+    void create_deveRetornarDTO_quandoSucesso() {
         when(usuarioService.create(any())).thenReturn(usuarioDTOStub());
 
-        ResponseEntity<UsuarioDTO> response = controller.create(
+        UsuarioDTO resultado = controller.create(
                 new UsuarioCreateRequest("Rafael", "rafael@email.com", "senha123")
         );
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().email()).isEqualTo("rafael@email.com");
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.email()).isEqualTo("rafael@email.com");
     }
 
-    // ---- getById ----
-
     @Test
-    void getById_deveRetornar200_quandoUsuarioExiste() {
+    void getById_deveRetornarDTO_quandoUsuarioExiste() {
         when(usuarioService.getById("id-123")).thenReturn(usuarioDTOStub());
 
-        ResponseEntity<UsuarioDTO> response = controller.getById("id-123");
+        UsuarioDTO resultado = controller.getById("id-123");
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().nome()).isEqualTo("Rafael");
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.nome()).isEqualTo("Rafael");
     }
 
-    // ---- update ----
-
     @Test
-    void update_deveRetornar200_quandoSucesso() {
+    void update_deveRetornarDTO_quandoSucesso() {
         when(usuarioService.update(any(), eq("id-123"))).thenReturn(usuarioDTOStub());
 
-        ResponseEntity<UsuarioDTO> response = controller.update(
-                new UsuarioUpdateReuqest("Rafael Atualizado", null), "id-123"
+        UsuarioDTO resultado = controller.update(
+                new UsuarioUpdateRequest("Rafael Atualizado", null), "id-123"
         );
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
+        assertThat(resultado).isNotNull();
         verify(usuarioService).update(any(), eq("id-123"));
     }
 
-    // ---- delete ----
-
     @Test
-    void delete_deveRetornar204_quandoSucesso() {
+    void delete_deveChamarService_quandoSucesso() {
         doNothing().when(usuarioService).delete("id-123");
 
-        ResponseEntity<Void> response = controller.delete("id-123");
+        controller.delete("id-123");
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         verify(usuarioService).delete("id-123");
     }
 }

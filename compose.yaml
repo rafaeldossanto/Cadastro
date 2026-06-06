@@ -2,8 +2,20 @@ services:
   postgres:
     image: 'postgres:latest'
     environment:
-      - 'POSTGRES_DB=mydatabase'
+      - 'POSTGRES_DB=trilha_cadastro'
       - 'POSTGRES_PASSWORD=secret'
       - 'POSTGRES_USER=myuser'
     ports:
-      - '5432'
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  zeebe:
+    image: 'camunda/zeebe:8.5.0'
+    environment:
+      - 'ZEEBE_BROKER_GATEWAY_SECURITY_ENABLED=false'
+    ports:
+      - '26500:26500'
+
+volumes:
+  postgres_data:

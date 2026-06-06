@@ -1,6 +1,6 @@
 package com.trail.Cadastro.model.dto.request;
 
-public record UsuarioUpdateReuqest(
+public record UsuarioUpdateRequest(
         String nome,
         String email
 ) {

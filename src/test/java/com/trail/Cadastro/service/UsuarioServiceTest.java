@@ -2,7 +2,7 @@ package com.trail.Cadastro.service;
 
 import com.trail.Cadastro.entity.Usuario;
 import com.trail.Cadastro.model.dto.request.UsuarioCreateRequest;
-import com.trail.Cadastro.model.dto.request.UsuarioUpdateReuqest;
+import com.trail.Cadastro.model.dto.request.UsuarioUpdateRequest;
 import com.trail.Cadastro.model.dto.response.UsuarioDTO;
 import com.trail.Cadastro.model.enums.StatusCadastro;
 import com.trail.Cadastro.repository.UsuarioRepository;
@@ -103,7 +103,7 @@ class UsuarioServiceTest {
         when(repository.findById("id-123")).thenReturn(Optional.of(usuario));
         when(repository.save(any())).thenReturn(usuario);
 
-        UsuarioUpdateReuqest request = new UsuarioUpdateReuqest("Rafael Novo", null);
+        UsuarioUpdateRequest request = new UsuarioUpdateRequest("Rafael Novo", null);
         UsuarioDTO resultado = service.update(request, "id-123");
 
         assertThat(resultado).isNotNull();
@@ -117,7 +117,7 @@ class UsuarioServiceTest {
         when(repository.findByEmail("novo@email.com")).thenReturn(null);
         when(repository.save(any())).thenReturn(usuario);
 
-        UsuarioUpdateReuqest request = new UsuarioUpdateReuqest(null, "novo@email.com");
+        UsuarioUpdateRequest request = new UsuarioUpdateRequest(null, "novo@email.com");
         UsuarioDTO resultado = service.update(request, "id-123");
 
         assertThat(resultado).isNotNull();
@@ -128,7 +128,7 @@ class UsuarioServiceTest {
     void update_deveLancarExcecao_quandoUsuarioNaoExiste() {
         when(repository.findById("id-inexistente")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.update(new UsuarioUpdateReuqest("nome", null), "id-inexistente"))
+        assertThatThrownBy(() -> service.update(new UsuarioUpdateRequest("nome", null), "id-inexistente"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Usuario nao encontrado");
     }
