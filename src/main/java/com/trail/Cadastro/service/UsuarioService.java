@@ -40,7 +40,6 @@ public class UsuarioService {
 
         if (isNull(request)) throw new IllegalArgumentException("O campo precisa ser preenchido");
 
-        // Atualizacao parcial: so altera o campo que veio preenchido; nulo mantem o valor atual.
         if (nonNull(request.nome())) {
             usuario.setNome(request.nome());
         }
