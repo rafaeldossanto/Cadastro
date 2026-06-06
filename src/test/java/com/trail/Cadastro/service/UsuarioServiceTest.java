@@ -18,6 +18,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -122,6 +123,36 @@ class UsuarioServiceTest {
 
         assertThat(resultado).isNotNull();
         verify(repository).save(any(Usuario.class));
+    }
+
+    @Test
+    void update_deveAtualizarNomeEEmail_quandoAmbosPreenchidos() {
+        Usuario usuario = usuarioStub();
+        when(repository.findById("id-123")).thenReturn(Optional.of(usuario));
+        when(repository.findByEmail("novo@email.com")).thenReturn(null);
+        when(repository.save(any())).thenReturn(usuario);
+
+        UsuarioUpdateRequest request = new UsuarioUpdateRequest("Rafael Novo", "novo@email.com");
+        service.update(request, "id-123");
+
+        assertThat(usuario.getNome()).isEqualTo("Rafael Novo");
+        assertThat(usuario.getEmail()).isEqualTo("novo@email.com");
+        verify(repository).save(any(Usuario.class));
+    }
+
+    @Test
+    void update_deveFalhar_quandoEmailJaPertenceAOutroUsuario() {
+        Usuario usuario = usuarioStub();
+        Usuario outro = usuarioStub();
+        outro.setId("outro-id");
+        when(repository.findById("id-123")).thenReturn(Optional.of(usuario));
+        when(repository.findByEmail("ocupado@email.com")).thenReturn(outro);
+
+        assertThatThrownBy(() -> service.update(new UsuarioUpdateRequest(null, "ocupado@email.com"), "id-123"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("ja existente");
+
+        verify(repository, never()).save(any());
     }
 
     @Test

@@ -18,22 +18,65 @@ repositories {
 	mavenCentral()
 }
 
+ext {
+	testcontainersVersion = '1.20.4'
+}
+
+// SourceSet dedicado para testes de integracao (src/integrationTest/java).
+sourceSets {
+	integrationTest {
+		java.srcDir file('src/integrationTest/java')
+		resources.srcDir file('src/integrationTest/resources')
+		compileClasspath += sourceSets.main.output + sourceSets.test.output
+		runtimeClasspath += sourceSets.main.output + sourceSets.test.output
+	}
+}
+
+configurations {
+	integrationTestImplementation.extendsFrom testImplementation
+	integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	implementation 'io.camunda.spring:spring-boot-starter-camunda:8.5.0'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
 	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat-runtime'
+
+	// Testes de unidade
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testCompileOnly 'org.projectlombok:lombok'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testAnnotationProcessor 'org.projectlombok:lombok'
-	implementation 'io.camunda.spring:spring-boot-starter-camunda:8.5.0'
+
+	// Testes de integracao (Testcontainers Postgres; Camunda/Zeebe desligado no perfil)
+	integrationTestImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	integrationTestImplementation "org.testcontainers:junit-jupiter:${testcontainersVersion}"
+	integrationTestImplementation "org.testcontainers:postgresql:${testcontainersVersion}"
 }
 
+// 'test' roda SOMENTE testes de unidade e exclui qualquer @Tag("integracao").
 tasks.named('test') {
+	useJUnitPlatform {
+		excludeTags 'integracao'
+	}
+}
+
+// 'integrationTest' roda os @SpringBootTest com Postgres real via Testcontainers.
+tasks.register('integrationTest', Test) {
+	description = 'Executa os testes de integracao (Testcontainers).'
+	group = 'verification'
+	testClassesDirs = sourceSets.integrationTest.output.classesDirs
+	classpath = sourceSets.integrationTest.runtimeClasspath
 	useJUnitPlatform()
+	shouldRunAfter tasks.named('test')
+}
+
+tasks.named('check') {
+	dependsOn tasks.named('integrationTest')
 }

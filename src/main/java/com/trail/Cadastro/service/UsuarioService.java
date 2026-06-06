@@ -40,14 +40,19 @@ public class UsuarioService {
 
         if (isNull(request)) throw new IllegalArgumentException("O campo precisa ser preenchido");
 
-        if (isNull(request.nome())) {
-            Usuario find = repository.findByEmail(request.email());
-            if (nonNull(find)) throw new IllegalArgumentException("Conta com esse email ja existente");
-            usuario.setEmail(request.email());
-        }
-        if (isNull(request.email())) {
+        // Atualizacao parcial: so altera o campo que veio preenchido; nulo mantem o valor atual.
+        if (nonNull(request.nome())) {
             usuario.setNome(request.nome());
         }
+
+        if (nonNull(request.email())) {
+            Usuario existente = repository.findByEmail(request.email());
+            if (nonNull(existente) && !existente.getId().equals(usuario.getId())) {
+                throw new IllegalArgumentException("Conta com esse email ja existente");
+            }
+            usuario.setEmail(request.email());
+        }
+
         log.info("Usuario atualizado com sucesso");
         return UsuarioMapper.toResponse(repository.save(usuario));
     }
