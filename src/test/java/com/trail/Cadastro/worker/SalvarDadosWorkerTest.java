@@ -36,6 +36,7 @@ class SalvarDadosWorkerTest {
 
     private UsuarioDTO usuarioDTOStub() {
         return UsuarioDTO.builder()
+                .id("usuario-1")
                 .nome("Rafael")
                 .email("rafael@email.com")
                 .codigoUsuario("rafael#1")

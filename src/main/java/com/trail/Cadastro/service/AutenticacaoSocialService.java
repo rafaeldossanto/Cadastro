@@ -9,11 +9,12 @@ import com.trail.Cadastro.model.dto.response.UsuarioDTO;
 import com.trail.Cadastro.model.enums.ProvedorAuth;
 import com.trail.Cadastro.repository.ContaVinculadaRepository;
 import com.trail.Cadastro.repository.UsuarioRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -22,12 +23,26 @@ import static java.util.Objects.nonNull;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class AutenticacaoSocialService {
 
     private final UsuarioRepository usuarioRepository;
     private final ContaVinculadaRepository contaVinculadaRepository;
     private final Map<ProvedorAuth, VerificadorTokenSocial> verificadores;
+
+    /**
+     * Recebe todos os verificadores disponiveis (o Spring injeta um por bean
+     * que implementa VerificadorTokenSocial) e os indexa por provedor. Assim,
+     * adicionar um provedor novo e so criar o bean correspondente — sem tocar
+     * neste construtor.
+     */
+    public AutenticacaoSocialService(UsuarioRepository usuarioRepository,
+                                     ContaVinculadaRepository contaVinculadaRepository,
+                                     List<VerificadorTokenSocial> verificadoresDisponiveis) {
+        this.usuarioRepository = usuarioRepository;
+        this.contaVinculadaRepository = contaVinculadaRepository;
+        this.verificadores = new EnumMap<>(ProvedorAuth.class);
+        verificadoresDisponiveis.forEach(v -> this.verificadores.put(v.provedor(), v));
+    }
 
     public UsuarioDTO autenticar(ProvedorAuth provedor, String idToken) {
         DadosUsuarioProvedor dados = verificar(provedor, idToken);

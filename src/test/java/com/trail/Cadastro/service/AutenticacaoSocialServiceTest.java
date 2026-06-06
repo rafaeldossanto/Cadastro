@@ -114,8 +114,6 @@ class AutenticacaoSocialServiceTest {
         verify(usuarioRepository).save(captor.capture());
         Usuario criado = captor.getValue();
 
-        // O codigoUsuario (nome + sequencia) garante que o usuario social entra
-        // no sistema de amizade como qualquer outro.
         assertThat(criado.getCodigoUsuario()).isEqualTo("rafael#7");
         assertThat(criado.getStatus()).isEqualTo(StatusCadastro.ATIVO);
         assertThat(criado.getSenha()).isNull();
@@ -126,7 +124,6 @@ class AutenticacaoSocialServiceTest {
     @Test
     @DisplayName("deve falhar quando o provedor nao tem verificador registrado")
     void deveFalharProvedorNaoSuportado() {
-        // Apple nao foi registrado neste setup (so Google).
         assertThatThrownBy(() -> service.autenticar(ProvedorAuth.APPLE, ID_TOKEN))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("nao suportado");
