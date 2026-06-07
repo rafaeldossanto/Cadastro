@@ -78,7 +78,4 @@ public class UsuarioService {
         Usuario usuario = repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
         usuario.setStatus(StatusCadastro.INATIVO);
-        repository.save(usuario);
-        log.info("Delecao de usuario bem sucedida");
-    }
-}
+ 

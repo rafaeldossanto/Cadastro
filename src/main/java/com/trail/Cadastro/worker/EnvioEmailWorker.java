@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -27,6 +28,4 @@ public class EnvioEmailWorker {
 
         String token = service.enviarConfirmacao(usuarioId, email);
 
-        return Map.of("tokenConfirmacao", token);
-    }
-}
+        // Map.of nao aceita val

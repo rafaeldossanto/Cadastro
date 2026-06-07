@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -34,9 +35,5 @@ public class SalvarDadosWorker {
 
         log.info("[WORKER] Usuario salvo com id: {} e codigo: {}", usuario.id(), usuario.codigoUsuario());
 
-        return Map.of(
-                "usuarioId", usuario.id(),
-                "email", usuario.email()
-        );
-    }
-}
+        // Map.of nao aceita valores nulos (estoura NPE cripitco). Validamos antes
+        // para falha

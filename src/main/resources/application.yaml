@@ -10,29 +10,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: false
-    properties:
-      hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-
-camunda:
-  client:
-    mode: simple
-    zeebe:
-      gateway-address: localhost:26500
-      plaintext: true
-
-server:
-  port: 8080
-
-# Login social: client-id (audience) esperado no ID token de cada provedor.
-# Sem segredos aqui — a validacao usa o JWKS publico do provedor. O client-id
-# do app deve bater com o aud do token, senao o token e rejeitado.
-auth:
-  social:
-    google:
-      client-id: ${GOOGLE_CLIENT_ID:}
-    apple:
-      client-id: ${APPLE_CLIENT_ID:}
+      # Em dev, o Hibernate cria/atualiza as tabelas. Em producao, troque para
+      # 'validate' e deixe o schema sob controle exclusivo do Flyway (gerando o
+      # baseline a partir do schema real). As migrations versionadas (ex.: a
+      # sequence do codigoUsuario) sao sempre aplicadas pelo Flywa

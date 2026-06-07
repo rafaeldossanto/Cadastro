@@ -31,30 +31,4 @@ public class UsuarioMapper {
      * Pontos importantes:
      * - Gera o codigoUsuario (nome + sequencia) igual ao cadastro normal, para
      *   que o usuario social possa ser encontrado/adicionado como amigo.
-     * - Entra como ATIVO: o provedor (Google/Apple) ja confirmou o email, entao
-     *   nao ha etapa de confirmacao por email.
-     * - Senha fica nula: a autenticacao e delegada ao provedor.
-     */
-    public Usuario toEntitySocial(DadosUsuarioProvedor dados, String nome, Long sequencia) {
-        return Usuario.builder()
-                .id(UUID.randomUUID().toString())
-                .nome(nome)
-                .email(dados.email())
-                .codigoUsuario(GenerateUtil.makeCode(nome, sequencia))
-                .status(StatusCadastro.ATIVO)
-                .dataCriacao(LocalDateTime.now())
-                .dataAtualizacao(LocalDateTime.now())
-                .build();
-    }
-
-    public UsuarioDTO toResponse(Usuario usuario) {
-        return UsuarioDTO.builder()
-                .id(usuario.getId())
-                .nome(usuario.getNome())
-                .email(usuario.getEmail())
-                .codigoUsuario(usuario.getCodigoUsuario())
-                .dataCriacao(usuario.getDataCriacao())
-                .dataAtualizacao(usuario.getDataAtualizacao())
-                .build();
-    }
-}
+     * - Entra como ATIVO: o provedor (Google/Apple) 

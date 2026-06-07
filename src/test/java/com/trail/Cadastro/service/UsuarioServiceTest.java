@@ -149,41 +149,4 @@ class UsuarioServiceTest {
         when(repository.findByEmail("ocupado@email.com")).thenReturn(outro);
 
         assertThatThrownBy(() -> service.update(new UsuarioUpdateRequest(null, "ocupado@email.com"), "id-123"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("ja existente");
-
-        verify(repository, never()).save(any());
-    }
-
-    @Test
-    void update_deveLancarExcecao_quandoUsuarioNaoExiste() {
-        when(repository.findById("id-inexistente")).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> service.update(new UsuarioUpdateRequest("nome", null), "id-inexistente"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Usuario nao encontrado");
-    }
-
-    // ---- delete ----
-
-    @Test
-    void delete_deveInativarUsuario_quandoExiste() {
-        Usuario usuario = usuarioStub();
-        when(repository.findById("id-123")).thenReturn(Optional.of(usuario));
-        when(repository.save(any())).thenReturn(usuario);
-
-        service.delete("id-123");
-
-        assertThat(usuario.getStatus()).isEqualTo(StatusCadastro.INATIVO);
-        verify(repository).save(usuario);
-    }
-
-    @Test
-    void delete_deveLancarExcecao_quandoUsuarioNaoExiste() {
-        when(repository.findById("id-inexistente")).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> service.delete("id-inexistente"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Usuario nao encontrado");
-    }
-}
+ 
