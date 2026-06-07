@@ -29,4 +29,7 @@ public class Usuario {
     private String email;
     private String senha;
     private String codigoUsuario;
-  
+    private @Builder.Default StatusCadastro status = StatusCadastro.PENDENTE;
+    private LocalDateTime dataCriacao;
+    private LocalDateTime dataAtualizacao;
+}

@@ -36,4 +36,13 @@ public class SalvarDadosWorker {
         log.info("[WORKER] Usuario salvo com id: {} e codigo: {}", usuario.id(), usuario.codigoUsuario());
 
         // Map.of nao aceita valores nulos (estoura NPE cripitco). Validamos antes
-        // para falha
+        // para falhar com uma mensagem clara caso o create nao preencha os campos.
+        Objects.requireNonNull(usuario.id(), "usuarioId nao pode ser nulo ao publicar variaveis do processo");
+        Objects.requireNonNull(usuario.email(), "email nao pode ser nulo ao publicar variaveis do processo");
+
+        return Map.of(
+                "usuarioId", usuario.id(),
+                "email", usuario.email()
+        );
+    }
+}

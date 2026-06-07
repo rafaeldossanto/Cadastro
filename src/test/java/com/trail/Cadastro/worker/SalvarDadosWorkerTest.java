@@ -60,4 +60,6 @@ class SalvarDadosWorkerTest {
         assertThat(resultado).containsKey("usuarioId");
         assertThat(resultado).containsKey("email");
         assertThat(resultado.get("email")).isEqualTo("rafael@email.com");
-        verify(usuari
+        verify(usuarioService).create(any());
+    }
+}

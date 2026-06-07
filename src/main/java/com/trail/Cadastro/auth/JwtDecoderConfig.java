@@ -58,4 +58,7 @@ public class JwtDecoderConfig {
                 JwtClaimNames.AUD,
                 aud -> nonNull(aud) && aud.contains(audienceEsperado));
 
-        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(padrao, a
+        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(padrao, audience));
+        return decoder;
+    }
+}

@@ -13,4 +13,13 @@ public interface UsuarioRepository extends JpaRepository<Usuario, String> {
     /**
      * Proximo numero de sequencia para compor o codigoUsuario (nome + numero).
      *
-     * Usa a sequence 
+     * Usa a sequence nativa do banco (nextval), que e ATOMICA — cada chamada
+     * devolve um valor unico mesmo sob cadastros concorrentes. Substitui o
+     * antigo COUNT(u)+1, que tinha race condition (dois cadastros simultaneos
+     * geravam o mesmo numero, criando codigoUsuario duplicado).
+     *
+     * A sequence "usuario_codigo_seq" e criada pela migration do Flyway.
+     */
+    @Query(value = "SELECT nextval('usuario_codigo_seq')", nativeQuery = true)
+    Long proximaSequencia();
+}

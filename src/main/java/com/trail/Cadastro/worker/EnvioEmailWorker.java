@@ -28,4 +28,9 @@ public class EnvioEmailWorker {
 
         String token = service.enviarConfirmacao(usuarioId, email);
 
-        // Map.of nao aceita val
+        // Map.of nao aceita valor nulo; falha com mensagem clara se o token vier nulo.
+        Objects.requireNonNull(token, "tokenConfirmacao nao pode ser nulo ao publicar variaveis do processo");
+
+        return Map.of("tokenConfirmacao", token);
+    }
+}

@@ -42,4 +42,46 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	// Valida ID tokens (JWT) de provedores sociais contra o JWKS publico deles.
-	i
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+	// Migrations versionadas do schema (sequence do codigoUsuario, etc).
+	implementation 'org.flywaydb:flyway-core'
+	implementation 'org.flywaydb:flyway-database-postgresql'
+	implementation 'io.camunda.spring:spring-boot-starter-camunda:8.5.0'
+	compileOnly 'org.projectlombok:lombok'
+	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+	runtimeOnly 'org.postgresql:postgresql'
+	annotationProcessor 'org.projectlombok:lombok'
+	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat-runtime'
+
+	// Testes de unidade
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testCompileOnly 'org.projectlombok:lombok'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	testAnnotationProcessor 'org.projectlombok:lombok'
+
+	// Testes de integracao (Testcontainers Postgres; Camunda/Zeebe desligado no perfil)
+	integrationTestImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	integrationTestImplementation "org.testcontainers:junit-jupiter:${testcontainersVersion}"
+	integrationTestImplementation "org.testcontainers:postgresql:${testcontainersVersion}"
+}
+
+// 'test' roda SOMENTE testes de unidade e exclui qualquer @Tag("integracao").
+tasks.named('test') {
+	useJUnitPlatform {
+		excludeTags 'integracao'
+	}
+}
+
+// 'integrationTest' roda os @SpringBootTest com Postgres real via Testcontainers.
+tasks.register('integrationTest', Test) {
+	description = 'Executa os testes de integracao (Testcontainers).'
+	group = 'verification'
+	testClassesDirs = sourceSets.integrationTest.output.classesDirs
+	classpath = sourceSets.integrationTest.runtimeClasspath
+	useJUnitPlatform()
+	shouldRunAfter tasks.named('test')
+}
+
+tasks.named('check') {
+	dependsOn tasks.named('integrationTest')
+}

@@ -43,4 +43,13 @@ public class ContaVinculada {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ProvedorAuth pro
+    private ProvedorAuth provedor;
+
+    @Column(name = "provedor_usuario_id")
+    private String provedorUsuarioId;
+
+    private String email;
+
+    @Column(nullable = false)
+    private LocalDateTime vinculadoEm;
+}
