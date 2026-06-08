@@ -25,6 +25,20 @@ spring:
     enabled: true
     baseline-on-migrate: true
 
+  # Envio do email de confirmacao. Funciona com qualquer SMTP (Gmail, Mailtrap,
+  # Brevo...). Preencha MAIL_USERNAME/MAIL_PASSWORD com as credenciais do provedor.
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 camunda:
   client:
     mode: simple
@@ -44,3 +58,11 @@ auth:
       client-id: ${GOOGLE_CLIENT_ID:}
     apple:
       client-id: ${APPLE_CLIENT_ID:}
+
+# Email de confirmacao de cadastro: remetente exibido e URL base do link que o
+# usuario clica para validar a conta. Em producao, aponte confirmacao-url para a
+# URL publica (BFF/front), nao para o localhost do servico.
+app:
+  email:
+    remetente: ${MAIL_FROM:nao-responda@trilha.com}
+    confirmacao-url: ${EMAIL_CONFIRMACAO_URL:http://localhost:8080/auth/confirmar-email}

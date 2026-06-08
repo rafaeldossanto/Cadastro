@@ -41,6 +41,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	// Envio do email de confirmacao de cadastro (SMTP via JavaMailSender).
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	// Valida ID tokens (JWT) de provedores sociais contra o JWKS publico deles.
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 	// Migrations versionadas do schema (sequence do codigoUsuario, etc).
