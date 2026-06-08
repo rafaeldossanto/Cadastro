@@ -30,12 +30,6 @@ public class AutenticacaoSocialService {
     private final ContaVinculadaRepository contaVinculadaRepository;
     private final Map<ProvedorAuth, VerificadorTokenSocial> verificadores;
 
-    /**
-     * Recebe todos os verificadores disponiveis (o Spring injeta um por bean
-     * que implementa VerificadorTokenSocial) e os indexa por provedor. Assim,
-     * adicionar um provedor novo e so criar o bean correspondente — sem tocar
-     * neste construtor.
-     */
     public AutenticacaoSocialService(UsuarioRepository usuarioRepository,
                                      ContaVinculadaRepository contaVinculadaRepository,
                                      List<VerificadorTokenSocial> verificadoresDisponiveis) {
