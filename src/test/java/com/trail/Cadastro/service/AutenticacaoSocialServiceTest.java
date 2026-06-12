@@ -1,10 +1,11 @@
 package com.trail.Cadastro.service;
 
 import com.trail.Cadastro.auth.DadosUsuarioProvedor;
+import com.trail.Cadastro.auth.TokenEmitido;
 import com.trail.Cadastro.auth.VerificadorTokenSocial;
 import com.trail.Cadastro.entity.ContaVinculada;
 import com.trail.Cadastro.entity.Usuario;
-import com.trail.Cadastro.model.dto.response.UsuarioDTO;
+import com.trail.Cadastro.model.dto.response.AutenticacaoResponse;
 import com.trail.Cadastro.model.enums.ProvedorAuth;
 import com.trail.Cadastro.model.enums.StatusCadastro;
 import com.trail.Cadastro.repository.ContaVinculadaRepository;
@@ -42,6 +43,8 @@ class AutenticacaoSocialServiceTest {
     private ContaVinculadaRepository contaVinculadaRepository;
     @Mock
     private VerificadorTokenSocial googleVerificador;
+    @Mock
+    private TokenService tokenService;
 
     private AutenticacaoSocialService service;
 
@@ -49,7 +52,7 @@ class AutenticacaoSocialServiceTest {
     void setUp() {
         when(googleVerificador.provedor()).thenReturn(ProvedorAuth.GOOGLE);
         service = new AutenticacaoSocialService(
-                usuarioRepository, contaVinculadaRepository, List.of(googleVerificador));
+                usuarioRepository, contaVinculadaRepository, tokenService, List.of(googleVerificador));
     }
 
     private DadosUsuarioProvedor dados() {
@@ -73,10 +76,12 @@ class AutenticacaoSocialServiceTest {
         when(googleVerificador.verificar(ID_TOKEN)).thenReturn(dados());
         when(contaVinculadaRepository.findByProvedorAndProvedorUsuarioId(ProvedorAuth.GOOGLE, SUB))
                 .thenReturn(Optional.of(vinculo));
+        when(tokenService.emitir(any(Usuario.class))).thenReturn(new TokenEmitido("jwt", 7200));
 
-        UsuarioDTO response = service.autenticar(ProvedorAuth.GOOGLE, ID_TOKEN);
+        AutenticacaoResponse response = service.autenticar(ProvedorAuth.GOOGLE, ID_TOKEN);
 
-        assertThat(response.id()).isEqualTo("usuario-1");
+        assertThat(response.usuario().id()).isEqualTo("usuario-1");
+        assertThat(response.accessToken()).isEqualTo("jwt");
         verify(usuarioRepository, never()).save(any());
         verify(contaVinculadaRepository, never()).save(any());
     }
@@ -90,10 +95,11 @@ class AutenticacaoSocialServiceTest {
         when(contaVinculadaRepository.findByProvedorAndProvedorUsuarioId(ProvedorAuth.GOOGLE, SUB))
                 .thenReturn(Optional.empty());
         when(usuarioRepository.findByEmail(EMAIL)).thenReturn(usuario);
+        when(tokenService.emitir(any(Usuario.class))).thenReturn(new TokenEmitido("jwt", 7200));
 
-        UsuarioDTO response = service.autenticar(ProvedorAuth.GOOGLE, ID_TOKEN);
+        AutenticacaoResponse response = service.autenticar(ProvedorAuth.GOOGLE, ID_TOKEN);
 
-        assertThat(response.id()).isEqualTo("usuario-1");
+        assertThat(response.usuario().id()).isEqualTo("usuario-1");
         verify(usuarioRepository, never()).save(any());
         verify(contaVinculadaRepository).save(any(ContaVinculada.class));
     }
@@ -107,8 +113,9 @@ class AutenticacaoSocialServiceTest {
         when(usuarioRepository.findByEmail(EMAIL)).thenReturn(null);
         when(usuarioRepository.proximaSequencia()).thenReturn(7L);
         when(usuarioRepository.save(any(Usuario.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(tokenService.emitir(any(Usuario.class))).thenReturn(new TokenEmitido("jwt", 7200));
 
-        UsuarioDTO response = service.autenticar(ProvedorAuth.GOOGLE, ID_TOKEN);
+        AutenticacaoResponse response = service.autenticar(ProvedorAuth.GOOGLE, ID_TOKEN);
 
         ArgumentCaptor<Usuario> captor = ArgumentCaptor.forClass(Usuario.class);
         verify(usuarioRepository).save(captor.capture());
@@ -117,7 +124,7 @@ class AutenticacaoSocialServiceTest {
         assertThat(criado.getCodigoUsuario()).isEqualTo("rafael#7");
         assertThat(criado.getStatus()).isEqualTo(StatusCadastro.ATIVO);
         assertThat(criado.getSenha()).isNull();
-        assertThat(response.email()).isEqualTo(EMAIL);
+        assertThat(response.usuario().email()).isEqualTo(EMAIL);
         verify(contaVinculadaRepository).save(any(ContaVinculada.class));
     }
 

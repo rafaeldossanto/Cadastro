@@ -1,11 +1,13 @@
 package com.trail.Cadastro.service;
 
 import com.trail.Cadastro.auth.DadosUsuarioProvedor;
+import com.trail.Cadastro.auth.TokenEmitido;
 import com.trail.Cadastro.auth.VerificadorTokenSocial;
 import com.trail.Cadastro.entity.ContaVinculada;
 import com.trail.Cadastro.entity.Usuario;
+import com.trail.Cadastro.mapper.AutenticacaoMapper;
 import com.trail.Cadastro.mapper.UsuarioMapper;
-import com.trail.Cadastro.model.dto.response.UsuarioDTO;
+import com.trail.Cadastro.model.dto.response.AutenticacaoResponse;
 import com.trail.Cadastro.model.enums.ProvedorAuth;
 import com.trail.Cadastro.repository.ContaVinculadaRepository;
 import com.trail.Cadastro.repository.UsuarioRepository;
@@ -28,19 +30,22 @@ public class AutenticacaoSocialService {
 
     private final UsuarioRepository usuarioRepository;
     private final ContaVinculadaRepository contaVinculadaRepository;
+    private final TokenService tokenService;
     private final Map<ProvedorAuth, VerificadorTokenSocial> verificadores;
 
     public AutenticacaoSocialService(UsuarioRepository usuarioRepository,
                                      ContaVinculadaRepository contaVinculadaRepository,
+                                     TokenService tokenService,
                                      List<VerificadorTokenSocial> verificadoresDisponiveis) {
         this.usuarioRepository = usuarioRepository;
         this.contaVinculadaRepository = contaVinculadaRepository;
+        this.tokenService = tokenService;
         this.verificadores = new EnumMap<>(ProvedorAuth.class);
         verificadoresDisponiveis.forEach(v -> this.verificadores.put(v.provedor(), v));
     }
 
     @Transactional
-    public UsuarioDTO autenticar(ProvedorAuth provedor, String idToken) {
+    public AutenticacaoResponse autenticar(ProvedorAuth provedor, String idToken) {
         DadosUsuarioProvedor dados = verificar(provedor, idToken);
         log.info("Login social {} para subject {}", provedor, dados.subject());
 
@@ -49,7 +54,8 @@ public class AutenticacaoSocialService {
                 .map(ContaVinculada::getUsuario)
                 .orElseGet(() -> resolverPorEmailOuCriar(provedor, dados));
 
-        return UsuarioMapper.toResponse(usuario);
+        TokenEmitido token = tokenService.emitir(usuario);
+        return AutenticacaoMapper.toResponse(usuario, token);
     }
 
     private DadosUsuarioProvedor verificar(ProvedorAuth provedor, String idToken) {

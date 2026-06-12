@@ -66,3 +66,8 @@ app:
   email:
     remetente: ${MAIL_FROM:nao-responda@trilha.com}
     confirmacao-url: ${EMAIL_CONFIRMACAO_URL:http://localhost:8080/auth/confirmar-email}
+  # Token de sessao emitido pela aplicacao (assinado com a chave RSA local; os
+  # demais servicos validam pelo JWKS publicado em /oauth2/jwks).
+  jwt:
+    issuer: ${JWT_ISSUER:http://localhost:8080}
+    ttl-segundos: ${JWT_TTL_SEGUNDOS:7200}
