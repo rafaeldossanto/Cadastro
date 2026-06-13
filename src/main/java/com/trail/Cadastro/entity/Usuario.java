@@ -1,9 +1,12 @@
 package com.trail.Cadastro.entity;
 
 import com.trail.Cadastro.model.enums.StatusCadastro;
+import com.trail.Cadastro.trace.TraceContext;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,4 +35,14 @@ public class Usuario {
     private @Builder.Default StatusCadastro status = StatusCadastro.PENDENTE;
     private LocalDateTime dataCriacao;
     private LocalDateTime dataAtualizacao;
+
+    @Column(name = "trace_id")
+    private String traceId;
+
+    @PrePersist
+    void aoCriar() {
+        if (traceId == null) {
+            traceId = TraceContext.atual();
+        }
+    }
 }
