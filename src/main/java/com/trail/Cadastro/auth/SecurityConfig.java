@@ -31,7 +31,7 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/usuario").permitAll()
-                        .requestMatchers("/auth/social", "/auth/confirmar-email", "/oauth2/jwks").permitAll()
+                        .requestMatchers("/auth/social", "/auth/confirmar-email", "/auth/dev-login", "/oauth2/jwks").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/actuator/health").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(appJwtDecoder)));

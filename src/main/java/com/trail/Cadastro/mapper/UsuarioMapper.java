@@ -47,6 +47,23 @@ public class UsuarioMapper {
                 .build();
     }
 
+    /**
+     * Cria um Usuario para o login de desenvolvimento: espelha o usuario social
+     * (codigoUsuario gerado, ATIVO, senha nula), porem a partir de email/nome
+     * informados direto, sem provedor. So usado pelo fluxo {@code @Profile("dev")}.
+     */
+    public Usuario toEntityDev(String email, String nome, Long sequencia) {
+        return Usuario.builder()
+                .id(UUID.randomUUID().toString())
+                .nome(nome)
+                .email(email)
+                .codigoUsuario(GenerateUtil.makeCode(nome, sequencia))
+                .status(StatusCadastro.ATIVO)
+                .dataCriacao(LocalDateTime.now())
+                .dataAtualizacao(LocalDateTime.now())
+                .build();
+    }
+
     public UsuarioDTO toResponse(Usuario usuario) {
         return UsuarioDTO.builder()
                 .id(usuario.getId())
