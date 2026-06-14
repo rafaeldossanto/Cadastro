@@ -16,10 +16,16 @@ spring:
       # sequence do codigoUsuario) sao sempre aplicadas pelo Flyway.
       ddl-auto: ${DDL_AUTO:update}
     show-sql: false
+    # Roda o data.sql (sequence) depois que o Hibernate cria as tabelas.
+    defer-datasource-initialization: true
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  sql:
+    init:
+      mode: always
 
   flyway:
     enabled: true
