@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,10 +18,9 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "usuario", indexes = {
-        @Index(name = "idx_usuario_codigo", columnList = "codigoUsuario"),
-        @Index(name = "idx_usuario_email", columnList = "email")
-})
+@Table(name = "usuario",
+        uniqueConstraints = @UniqueConstraint(name = "uk_usuario_codigo", columnNames = "codigoUsuario"),
+        indexes = @Index(name = "idx_usuario_email", columnList = "email"))
 @Getter
 @Setter
 @NoArgsConstructor
