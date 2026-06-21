@@ -36,14 +36,14 @@ public class JwtKeyConfig {
 
     @Bean
     public RSAKey rsaKey() throws JOSEException {
-        RSAKey chave = new RSAKeyGenerator(2048)
+        RSAKey key = new RSAKeyGenerator(2048)
                 .keyID(UUID.randomUUID().toString())
                 .keyUse(KeyUse.SIGNATURE)
                 .algorithm(JWSAlgorithm.RS256)
                 .generate();
         log.warn("Par RSA efemero gerado para assinatura do JWT da aplicacao (kid={}). "
-                + "Configure uma chave estavel em producao.", chave.getKeyID());
-        return chave;
+                + "Configure uma chave estavel em producao.", key.getKeyID());
+        return key;
     }
 
     @Bean

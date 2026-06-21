@@ -1,11 +1,11 @@
 package com.trail.Cadastro.service;
 
-import com.trail.Cadastro.entity.ConfirmacaoEmail;
-import com.trail.Cadastro.entity.Usuario;
-import com.trail.Cadastro.model.enums.StatusCadastro;
-import com.trail.Cadastro.model.enums.StatusConfirmacao;
-import com.trail.Cadastro.repository.ConfirmacaoEmailRepository;
-import com.trail.Cadastro.repository.UsuarioRepository;
+import com.trail.Cadastro.entity.EmailConfirmation;
+import com.trail.Cadastro.entity.User;
+import com.trail.Cadastro.model.enums.RegistrationStatus;
+import com.trail.Cadastro.model.enums.ConfirmationStatus;
+import com.trail.Cadastro.repository.EmailConfirmationRepository;
+import com.trail.Cadastro.repository.UserRepository;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,9 +33,9 @@ import static org.mockito.Mockito.when;
 class EmailServiceTest {
 
     @Mock
-    private UsuarioRepository repository;
+    private UserRepository repository;
     @Mock
-    private ConfirmacaoEmailRepository emailRepository;
+    private EmailConfirmationRepository emailRepository;
     @Mock
     private JavaMailSender mailSender;
 
@@ -44,45 +44,45 @@ class EmailServiceTest {
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(service, "remetente", "nao-responda@trilha.com");
-        ReflectionTestUtils.setField(service, "confirmacaoUrl", "http://localhost:8080/auth/confirmar-email");
+        ReflectionTestUtils.setField(service, "sender", "nao-responda@trilha.com");
+        ReflectionTestUtils.setField(service, "confirmationUrl", "http://localhost:8080/auth/confirmar-email");
     }
 
-    private Usuario usuarioStub() {
-        return Usuario.builder()
+    private User userStub() {
+        return User.builder()
                 .id("id-123")
-                .nome("Rafael")
+                .name("Rafael")
                 .email("rafael@email.com")
-                .status(StatusCadastro.PENDENTE)
+                .status(RegistrationStatus.PENDENTE)
                 .build();
     }
 
     @Test
-    @DisplayName("enviarConfirmacao deve persistir token PENDENTE, enviar o email e retornar o token")
+    @DisplayName("sendConfirmation deve persistir token PENDENTE, enviar o email e retornar o token")
     void deveEnviarConfirmacao() {
-        when(repository.findById("id-123")).thenReturn(Optional.of(usuarioStub()));
+        when(repository.findById("id-123")).thenReturn(Optional.of(userStub()));
         when(mailSender.createMimeMessage()).thenReturn(new MimeMessage((Session) null));
 
-        String token = service.enviarConfirmacao("id-123", "rafael@email.com");
+        String token = service.sendConfirmation("id-123", "rafael@email.com");
 
         assertThat(token).isNotBlank();
 
-        ArgumentCaptor<ConfirmacaoEmail> captor = ArgumentCaptor.forClass(ConfirmacaoEmail.class);
+        ArgumentCaptor<EmailConfirmation> captor = ArgumentCaptor.forClass(EmailConfirmation.class);
         verify(emailRepository).save(captor.capture());
-        ConfirmacaoEmail salvo = captor.getValue();
-        assertThat(salvo.getToken()).isEqualTo(token);
-        assertThat(salvo.getStatus()).isEqualTo(StatusConfirmacao.PENDENTE);
-        assertThat(salvo.getExpiraEm()).isNotNull();
+        EmailConfirmation saved = captor.getValue();
+        assertThat(saved.getToken()).isEqualTo(token);
+        assertThat(saved.getStatus()).isEqualTo(ConfirmationStatus.PENDENTE);
+        assertThat(saved.getExpiresAt()).isNotNull();
 
         verify(mailSender).send(any(MimeMessage.class));
     }
 
     @Test
-    @DisplayName("enviarConfirmacao deve falhar e nao enviar email quando o usuario nao existe")
+    @DisplayName("sendConfirmation deve falhar e nao enviar email quando o usuario nao existe")
     void deveFalharUsuarioInexistente() {
         when(repository.findById("inexistente")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.enviarConfirmacao("inexistente", "x@email.com"))
+        assertThatThrownBy(() -> service.sendConfirmation("inexistente", "x@email.com"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Usuario nao encontrado");
 

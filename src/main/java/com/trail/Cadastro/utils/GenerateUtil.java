@@ -8,8 +8,8 @@ import java.util.concurrent.atomic.AtomicLong;
 @UtilityClass
 public class GenerateUtil {
 
-    public static String makeCode(String nome, Long sequencia) {
-        String nomeFormatado = nome.toLowerCase().replaceAll("\\s+", "");
-        return nomeFormatado + "#" + sequencia;
+    public static String makeCode(String name, Long sequence) {
+        String formattedName = name.toLowerCase().replaceAll("\\s+", "");
+        return formattedName + "#" + sequence;
     }
 }

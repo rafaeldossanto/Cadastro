@@ -1,5 +1,6 @@
 package com.trail.Cadastro.model.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
@@ -10,5 +11,5 @@ import jakarta.validation.constraints.NotBlank;
  */
 public record DevLoginRequest(
         @NotBlank @Email String email,
-        @NotBlank String nome
+        @JsonProperty("nome") @NotBlank String name
 ) {}

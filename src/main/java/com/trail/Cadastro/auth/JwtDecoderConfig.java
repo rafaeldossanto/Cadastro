@@ -42,23 +42,23 @@ public class JwtDecoderConfig {
 
     @Bean
     public NimbusJwtDecoder googleJwtDecoder() {
-        return decoderComAudience(ISSUER_GOOGLE, properties.getGoogle().getClientId());
+        return decoderWithAudience(ISSUER_GOOGLE, properties.getGoogle().getClientId());
     }
 
     @Bean
     public NimbusJwtDecoder appleJwtDecoder() {
-        return decoderComAudience(ISSUER_APPLE, properties.getApple().getClientId());
+        return decoderWithAudience(ISSUER_APPLE, properties.getApple().getClientId());
     }
 
-    private NimbusJwtDecoder decoderComAudience(String issuer, String audienceEsperado) {
+    private NimbusJwtDecoder decoderWithAudience(String issuer, String expectedAudience) {
         NimbusJwtDecoder decoder = (NimbusJwtDecoder) JwtDecoders.fromIssuerLocation(issuer);
 
-        OAuth2TokenValidator<Jwt> padrao = JwtValidators.createDefaultWithIssuer(issuer);
+        OAuth2TokenValidator<Jwt> standard = JwtValidators.createDefaultWithIssuer(issuer);
         OAuth2TokenValidator<Jwt> audience = new JwtClaimValidator<List<String>>(
                 JwtClaimNames.AUD,
-                aud -> nonNull(aud) && aud.contains(audienceEsperado));
+                aud -> nonNull(aud) && aud.contains(expectedAudience));
 
-        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(padrao, audience));
+        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(standard, audience));
         return decoder;
     }
 }

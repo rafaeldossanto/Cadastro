@@ -7,8 +7,8 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.trail.Cadastro.auth.JwtProperties;
-import com.trail.Cadastro.auth.TokenEmitido;
-import com.trail.Cadastro.entity.Usuario;
+import com.trail.Cadastro.auth.IssuedToken;
+import com.trail.Cadastro.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,20 +41,20 @@ class TokenServiceTest {
     }
 
     @Test
-    @DisplayName("emitir deve gerar um token assinado com os claims do usuario")
+    @DisplayName("issue deve gerar um token assinado com os claims do usuario")
     void deveEmitirTokenComClaims() {
-        Usuario usuario = Usuario.builder()
+        User user = User.builder()
                 .id("id-1")
-                .nome("Rafael")
+                .name("Rafael")
                 .email("rafael@email.com")
-                .codigoUsuario("rafael#1")
+                .userCode("rafael#1")
                 .build();
 
-        TokenEmitido emitido = tokenService.emitir(usuario);
+        IssuedToken issued = tokenService.issue(user);
 
-        assertThat(emitido.expiraEmSegundos()).isEqualTo(7200);
+        assertThat(issued.expiresInSeconds()).isEqualTo(7200);
 
-        Jwt jwt = decoder.decode(emitido.valor());
+        Jwt jwt = decoder.decode(issued.value());
         assertThat(jwt.getSubject()).isEqualTo("id-1");
         assertThat(jwt.getClaimAsString("codigoUsuario")).isEqualTo("rafael#1");
         assertThat(jwt.getClaimAsString("email")).isEqualTo("rafael@email.com");

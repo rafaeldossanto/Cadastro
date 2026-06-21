@@ -1,10 +1,10 @@
 package com.trail.Cadastro.service;
 
-import com.trail.Cadastro.entity.ConfirmacaoEmail;
-import com.trail.Cadastro.entity.Usuario;
-import com.trail.Cadastro.model.enums.StatusConfirmacao;
-import com.trail.Cadastro.repository.ConfirmacaoEmailRepository;
-import com.trail.Cadastro.repository.UsuarioRepository;
+import com.trail.Cadastro.entity.EmailConfirmation;
+import com.trail.Cadastro.entity.User;
+import com.trail.Cadastro.model.enums.ConfirmationStatus;
+import com.trail.Cadastro.repository.EmailConfirmationRepository;
+import com.trail.Cadastro.repository.UserRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -22,55 +22,55 @@ import java.util.UUID;
 @Slf4j
 public class EmailService {
 
-    private final UsuarioRepository repository;
-    private final ConfirmacaoEmailRepository emailRepository;
+    private final UserRepository repository;
+    private final EmailConfirmationRepository emailRepository;
     private final JavaMailSender mailSender;
 
     @Value("${app.email.remetente}")
-    private String remetente;
+    private String sender;
 
     @Value("${app.email.confirmacao-url}")
-    private String confirmacaoUrl;
+    private String confirmationUrl;
 
-    public String enviarConfirmacao(String usuarioId, String email) {
-        Usuario usuario = repository.findById(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado: " + usuarioId));
+    public String sendConfirmation(String userId, String email) {
+        User user = repository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado: " + userId));
 
         String token = UUID.randomUUID().toString();
 
-        ConfirmacaoEmail confirmacao = ConfirmacaoEmail.builder()
-                .usuario(usuario)
+        EmailConfirmation confirmation = EmailConfirmation.builder()
+                .user(user)
                 .token(token)
-                .status(StatusConfirmacao.PENDENTE)
-                .expiraEm(LocalDateTime.now().plusMinutes(10))
+                .status(ConfirmationStatus.PENDENTE)
+                .expiresAt(LocalDateTime.now().plusMinutes(10))
                 .build();
 
-        emailRepository.save(confirmacao);
+        emailRepository.save(confirmation);
 
-        enviar(email, usuario.getNome(), token);
+        send(email, user.getName(), token);
 
         return token;
     }
 
-    private void enviar(String destinatario, String nome, String token) {
-        String link = confirmacaoUrl + "?token=" + token;
+    private void send(String recipient, String name, String token) {
+        String link = confirmationUrl + "?token=" + token;
         try {
-            MimeMessage mensagem = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mensagem, false, "UTF-8");
-            helper.setFrom(remetente);
-            helper.setTo(destinatario);
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+            helper.setFrom(sender);
+            helper.setTo(recipient);
             helper.setSubject("Confirme seu email - Trilha");
-            helper.setText(montarCorpo(nome, link), true);
+            helper.setText(buildBody(name, link), true);
 
-            mailSender.send(mensagem);
-            log.info("Email de confirmacao enviado para: {}", destinatario);
+            mailSender.send(message);
+            log.info("Email de confirmacao enviado para: {}", recipient);
         } catch (MessagingException e) {
-            log.error("Falha ao enviar email de confirmacao para {}: {}", destinatario, e.getMessage());
+            log.error("Falha ao enviar email de confirmacao para {}: {}", recipient, e.getMessage());
             throw new IllegalStateException("Nao foi possivel enviar o email de confirmacao", e);
         }
     }
 
-    private String montarCorpo(String nome, String link) {
+    private String buildBody(String name, String link) {
         return """
                 <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto; color: #1a1a1a;">
                   <h2>Bem-vindo ao Trilha, %s!</h2>
@@ -85,6 +85,6 @@ public class EmailService {
                   <p><a href="%s">%s</a></p>
                   <p style="color: #888888; font-size: 13px;">O link expira em 10 minutos. Se voce nao criou uma conta no Trilha, ignore este email.</p>
                 </div>
-                """.formatted(nome, link, link, link);
+                """.formatted(name, link, link, link);
     }
 }

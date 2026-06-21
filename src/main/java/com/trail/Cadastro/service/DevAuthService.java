@@ -1,11 +1,11 @@
 package com.trail.Cadastro.service;
 
-import com.trail.Cadastro.auth.TokenEmitido;
-import com.trail.Cadastro.entity.Usuario;
-import com.trail.Cadastro.mapper.AutenticacaoMapper;
-import com.trail.Cadastro.mapper.UsuarioMapper;
-import com.trail.Cadastro.model.dto.response.AutenticacaoResponse;
-import com.trail.Cadastro.repository.UsuarioRepository;
+import com.trail.Cadastro.auth.IssuedToken;
+import com.trail.Cadastro.entity.User;
+import com.trail.Cadastro.mapper.AuthenticationMapper;
+import com.trail.Cadastro.mapper.UserMapper;
+import com.trail.Cadastro.model.dto.response.AuthenticationResponse;
+import com.trail.Cadastro.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -25,21 +25,21 @@ import static java.util.Objects.isNull;
 @Slf4j
 public class DevAuthService {
 
-    private final UsuarioRepository usuarioRepository;
+    private final UserRepository userRepository;
     private final TokenService tokenService;
 
     @Transactional
-    public AutenticacaoResponse login(String email, String nome) {
+    public AuthenticationResponse login(String email, String name) {
         log.info("Dev login para {}", email);
 
-        Usuario usuario = usuarioRepository.findByEmail(email);
-        if (isNull(usuario)) {
-            Long sequencia = usuarioRepository.proximaSequencia();
-            usuario = usuarioRepository.save(UsuarioMapper.toEntityDev(email, nome, sequencia));
-            log.info("Usuario dev criado: {} ({})", usuario.getCodigoUsuario(), usuario.getId());
+        User user = userRepository.findByEmail(email);
+        if (isNull(user)) {
+            Long sequence = userRepository.nextSequence();
+            user = userRepository.save(UserMapper.toEntityDev(email, name, sequence));
+            log.info("Usuario dev criado: {} ({})", user.getUserCode(), user.getId());
         }
 
-        TokenEmitido token = tokenService.emitir(usuario);
-        return AutenticacaoMapper.toResponse(usuario, token);
+        IssuedToken token = tokenService.issue(user);
+        return AuthenticationMapper.toResponse(user, token);
     }
 }

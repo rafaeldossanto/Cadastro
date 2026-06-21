@@ -1,7 +1,7 @@
 package com.trail.Cadastro.controller;
 
 import com.trail.Cadastro.model.dto.request.DevLoginRequest;
-import com.trail.Cadastro.model.dto.response.AutenticacaoResponse;
+import com.trail.Cadastro.model.dto.response.AuthenticationResponse;
 import com.trail.Cadastro.service.DevAuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class DevAuthController {
     private final DevAuthService devAuthService;
 
     @PostMapping
-    public AutenticacaoResponse login(@RequestBody @Valid DevLoginRequest request) {
-        return devAuthService.login(request.email(), request.nome());
+    public AuthenticationResponse login(@RequestBody @Valid DevLoginRequest request) {
+        return devAuthService.login(request.email(), request.name());
     }
 }
