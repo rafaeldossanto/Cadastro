@@ -32,6 +32,9 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Base64;
 
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+
 /**
  * Chave RSA que assina o token da aplicacao e a fonte do JWKS publicado em
  * {@code /oauth2/jwks}. Os demais servicos validam os tokens buscando essa
@@ -83,7 +86,7 @@ public class JwtKeyConfig {
 
     private String loadPem() throws IOException {
         String path = jwtProperties.getRsaPrivateKeyPath();
-        if (path != null && !path.isBlank()) {
+        if (nonNull(path) && !path.isBlank()) {
             log.info("Carregando chave RSA de arquivo: {}", path);
             return Files.readString(Path.of(path));
         }
@@ -91,7 +94,7 @@ public class JwtKeyConfig {
         log.warn("JWT_RSA_PRIVATE_KEY_PATH nao definida — usando chave de DESENVOLVIMENTO "
                 + "(classpath:keys/dev-private-key.pem). Defina a variavel em producao.");
         try (InputStream is = getClass().getResourceAsStream("/keys/dev-private-key.pem")) {
-            if (is == null) {
+            if (isNull(is)) {
                 throw new IllegalStateException(
                         "Chave RSA de dev nao encontrada em classpath:keys/dev-private-key.pem. "
                         + "Defina JWT_RSA_PRIVATE_KEY_PATH ou inclua o arquivo no classpath.");

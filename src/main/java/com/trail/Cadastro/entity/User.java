@@ -17,6 +17,8 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+import static java.util.Objects.isNull;
+
 @Entity
 @Table(name = "usuario",
         uniqueConstraints = @UniqueConstraint(name = "uk_usuario_codigo", columnNames = "codigo_usuario"),
@@ -53,7 +55,7 @@ public class User {
 
     @PrePersist
     void onCreate() {
-        if (traceId == null) {
+        if (isNull(traceId)) {
             traceId = TraceContext.current();
         }
     }
