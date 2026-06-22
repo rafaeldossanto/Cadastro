@@ -4,8 +4,8 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5432/trilha_cadastro
-    username: ${DB_USERNAME:myuser}
-    password: ${DB_PASSWORD:secret}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -82,3 +82,7 @@ app:
   jwt:
     issuer: ${JWT_ISSUER:http://localhost:8080}
     ttl-segundos: ${JWT_TTL_SEGUNDOS:7200}
+    # Producao: aponte para o PEM (PKCS#8) da chave privada RSA (ex.: segredo montado
+    # pelo Kubernetes ou Secret Manager). Dev: deixe vazio para usar a chave bundled
+    # em classpath:keys/dev-private-key.pem (nao e um segredo real).
+    rsa-private-key-path: ${JWT_RSA_PRIVATE_KEY_PATH:}
