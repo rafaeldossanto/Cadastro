@@ -70,6 +70,7 @@ public class UserMapper {
                 .name(user.getName())
                 .email(user.getEmail())
                 .userCode(user.getUserCode())
+                .status(user.getStatus())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();

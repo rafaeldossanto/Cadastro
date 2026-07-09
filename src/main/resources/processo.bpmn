@@ -1,22 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0oqnlqu" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.45.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.5.0">
-  <bpmn:process id="Process_0t8nnwr" isExecutable="true">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:modeler="http://camunda.org/schema/modeler/1.0" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" id="Definitions_0oqnlqu" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.45.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.5.0">
+  <bpmn:process id="cadastro-usuario" name="Cadastro de usuario" isExecutable="true">
     <bpmn:startEvent id="StartEvent_1">
       <bpmn:outgoing>Flow_1tws7ld</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:sequenceFlow id="Flow_1tws7ld" sourceRef="StartEvent_1" targetRef="Activity_10mf5l2" />
-    <bpmn:serviceTask id="Activity_10mf5l2" name="Salvar dados">
-      <bpmn:incoming>Flow_1tws7ld</bpmn:incoming>
-      <bpmn:outgoing>Flow_0cq6q7b</bpmn:outgoing>
-    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_1tws7ld" sourceRef="StartEvent_1" targetRef="Activity_1lhs467" />
     <bpmn:subProcess id="Activity_1lhs467">
       <bpmn:extensionElements />
-      <bpmn:incoming>Flow_0cq6q7b</bpmn:incoming>
+      <bpmn:incoming>Flow_1tws7ld</bpmn:incoming>
       <bpmn:outgoing>Flow_0wzo8f3</bpmn:outgoing>
       <bpmn:startEvent id="Event_14vkvsh">
         <bpmn:outgoing>Flow_1xwyr7u</bpmn:outgoing>
       </bpmn:startEvent>
-      <bpmn:receiveTask id="Activity_0s5t47f" name="Termos de aceite">
+      <bpmn:receiveTask id="Activity_0s5t47f" name="Termos de aceite" messageRef="Message_termos_aceitos">
         <bpmn:incoming>Flow_0qsoc5l</bpmn:incoming>
         <bpmn:outgoing>Flow_0p92a1e</bpmn:outgoing>
       </bpmn:receiveTask>
@@ -28,10 +24,13 @@
       </bpmn:parallelGateway>
       <bpmn:sequenceFlow id="Flow_0qsoc5l" sourceRef="Gateway_0l7snby" targetRef="Activity_0s5t47f" />
       <bpmn:sendTask id="Activity_107jssy" name="Envio de email">
+        <bpmn:extensionElements>
+          <zeebe:taskDefinition type="envio-email" />
+        </bpmn:extensionElements>
         <bpmn:incoming>Flow_1qrps6d</bpmn:incoming>
         <bpmn:outgoing>Flow_1tq2kgc</bpmn:outgoing>
       </bpmn:sendTask>
-      <bpmn:receiveTask id="Activity_18abhux" name="Validação email">
+      <bpmn:receiveTask id="Activity_18abhux" name="Validação email" messageRef="Message_email_confirmado">
         <bpmn:incoming>Flow_1tq2kgc</bpmn:incoming>
         <bpmn:outgoing>Flow_0bd7ruv</bpmn:outgoing>
       </bpmn:receiveTask>
@@ -49,7 +48,6 @@
         <bpmn:outgoing>Flow_1nzy8zs</bpmn:outgoing>
       </bpmn:parallelGateway>
     </bpmn:subProcess>
-    <bpmn:sequenceFlow id="Flow_0cq6q7b" sourceRef="Activity_10mf5l2" targetRef="Activity_1lhs467" />
     <bpmn:boundaryEvent id="Event_014z74t" attachedToRef="Activity_1lhs467">
       <bpmn:outgoing>Flow_0uvzjmc</bpmn:outgoing>
       <bpmn:timerEventDefinition id="TimerEventDefinition_0tg3nee">
@@ -64,22 +62,35 @@
     <bpmn:sequenceFlow id="Flow_15bewvg" sourceRef="Activity_1dxdwbo" targetRef="Event_04s9738" />
     <bpmn:sequenceFlow id="Flow_0uvzjmc" sourceRef="Event_014z74t" targetRef="Activity_0yc0c8t" />
     <bpmn:serviceTask id="Activity_0yc0c8t" name="Deleção de dados">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="delecao-dados" />
+      </bpmn:extensionElements>
       <bpmn:incoming>Flow_0uvzjmc</bpmn:incoming>
       <bpmn:outgoing>Flow_1kmjl2a</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:serviceTask id="Activity_1dxdwbo" name="Liberação de conta">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="liberacao-conta" />
+      </bpmn:extensionElements>
       <bpmn:incoming>Flow_0wzo8f3</bpmn:incoming>
       <bpmn:outgoing>Flow_15bewvg</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:sequenceFlow id="Flow_1kmjl2a" sourceRef="Activity_0yc0c8t" targetRef="Event_04s9738" />
   </bpmn:process>
+  <bpmn:message id="Message_termos_aceitos" name="termos-aceitos">
+    <bpmn:extensionElements>
+      <zeebe:subscription correlationKey="=usuarioId" />
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmn:message id="Message_email_confirmado" name="email-confirmado">
+    <bpmn:extensionElements>
+      <zeebe:subscription correlationKey="=usuarioId" />
+    </bpmn:extensionElements>
+  </bpmn:message>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_0t8nnwr">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="cadastro-usuario">
       <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
         <dc:Bounds x="112" y="272" width="36" height="36" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_16lncjh_di" bpmnElement="Activity_10mf5l2">
-        <dc:Bounds x="190" y="250" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0ftyass_di" bpmnElement="Activity_1dxdwbo">
         <dc:Bounds x="1120" y="246" width="100" height="80" />
@@ -149,10 +160,6 @@
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_1tws7ld_di" bpmnElement="Flow_1tws7ld">
         <di:waypoint x="148" y="290" />
-        <di:waypoint x="190" y="290" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0cq6q7b_di" bpmnElement="Flow_0cq6q7b">
-        <di:waypoint x="290" y="290" />
         <di:waypoint x="340" y="290" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0uvzjmc_di" bpmnElement="Flow_0uvzjmc">

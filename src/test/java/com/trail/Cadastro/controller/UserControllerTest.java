@@ -4,6 +4,7 @@ import com.trail.Cadastro.model.dto.request.UserCreateRequest;
 import com.trail.Cadastro.model.dto.request.UserUpdateRequest;
 import com.trail.Cadastro.model.dto.response.UserDTO;
 import com.trail.Cadastro.model.enums.RegistrationStatus;
+import com.trail.Cadastro.service.RegistrationService;
 import com.trail.Cadastro.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +27,9 @@ class UserControllerTest {
     @Mock
     private UserService userService;
 
+    @Mock
+    private RegistrationService registrationService;
+
     @InjectMocks
     private UserController controller;
 
@@ -43,7 +47,7 @@ class UserControllerTest {
 
     @Test
     void create_deveRetornarDTO_quandoSucesso() {
-        when(userService.create(any())).thenReturn(userDTOStub());
+        when(registrationService.register(any())).thenReturn(userDTOStub());
 
         UserDTO result = controller.create(
                 new UserCreateRequest("Rafael", "rafael@email.com", "senha123")
@@ -51,6 +55,7 @@ class UserControllerTest {
 
         assertThat(result).isNotNull();
         assertThat(result.email()).isEqualTo("rafael@email.com");
+        verify(registrationService).register(any(UserCreateRequest.class));
     }
 
     @Test

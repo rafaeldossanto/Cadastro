@@ -75,6 +75,26 @@ class UserServiceTest {
                 .hasMessage("Conta com esse email ja existente");
     }
 
+    @Test
+    void create_deveReaproveitarRegistro_quandoEmailPertenceAContaInativa() {
+        User inactive = userStub();
+        inactive.setStatus(RegistrationStatus.INATIVO);
+        when(repository.findByEmail("rafael@email.com")).thenReturn(inactive);
+
+        UserDTO result = service.create(
+                new UserCreateRequest("Rafael Novo", "rafael@email.com", "novaSenha"));
+
+        assertThat(result).isNotNull();
+        assertThat(inactive.getStatus()).isEqualTo(RegistrationStatus.PENDENTE);
+        assertThat(inactive.getName()).isEqualTo("Rafael Novo");
+        assertThat(inactive.getPassword()).isEqualTo("novaSenha");
+        // Preserva id e codigoUsuario do registro original.
+        assertThat(result.id()).isEqualTo("id-123");
+        assertThat(result.userCode()).isEqualTo("rafael#1");
+        verify(repository, never()).nextSequence();
+        verify(repository).save(inactive);
+    }
+
     // ---- getById ----
 
     @Test

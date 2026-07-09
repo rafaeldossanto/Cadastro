@@ -33,6 +33,9 @@ public class EmailConfirmation {
     @Column(name = "expira_em")
     private LocalDateTime expiresAt;
 
+    @Column(name = "enviado_em")
+    private LocalDateTime sentAt;
+
     @Column(name = "data_confirmacao")
     private LocalDateTime confirmedAt;
 }

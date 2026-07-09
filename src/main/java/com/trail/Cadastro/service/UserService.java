@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
@@ -24,12 +26,32 @@ public class UserService {
     public UserDTO create(UserCreateRequest request) {
         log.info("Iniciando processo de cadastro de usuario");
         User find = repository.findByEmail(request.email());
-        if (nonNull(find)) throw new IllegalArgumentException("Conta com esse email ja existente");
+        if (nonNull(find)) {
+            if (!RegistrationStatus.INATIVO.equals(find.getStatus())) {
+                throw new IllegalArgumentException("Conta com esse email ja existente");
+            }
+            return reactivate(find, request);
+        }
 
         Long sequence = repository.nextSequence();
         User user = UserMapper.toEntity(request, sequence);
         repository.save(user);
         log.info("Processo finalizado com sucesso");
+        return UserMapper.toResponse(user);
+    }
+
+    /**
+     * Reaproveita o registro de uma conta INATIVA (ex.: cadastro que expirou sem
+     * confirmar o email), preservando id e codigoUsuario, e reinicia como PENDENTE
+     * para o processo de confirmacao rodar de novo.
+     */
+    private UserDTO reactivate(User user, UserCreateRequest request) {
+        user.setName(request.name());
+        user.setPassword(request.password());
+        user.setStatus(RegistrationStatus.PENDENTE);
+        user.setUpdatedAt(LocalDateTime.now());
+        repository.save(user);
+        log.info("Cadastro reativado para conta inativa");
         return UserMapper.toResponse(user);
     }
 

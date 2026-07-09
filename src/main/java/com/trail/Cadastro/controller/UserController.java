@@ -3,6 +3,7 @@ package com.trail.Cadastro.controller;
 import com.trail.Cadastro.model.dto.request.UserCreateRequest;
 import com.trail.Cadastro.model.dto.request.UserUpdateRequest;
 import com.trail.Cadastro.model.dto.response.UserDTO;
+import com.trail.Cadastro.service.RegistrationService;
 import com.trail.Cadastro.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,10 +22,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserService userService;
+    private final RegistrationService registrationService;
 
     @PostMapping
     public UserDTO create(@RequestBody @Valid UserCreateRequest request) {
-        return userService.create(request);
+        return registrationService.register(request);
     }
 
     @PutMapping("/{id}")

@@ -9,5 +9,6 @@ import java.util.Optional;
 @Repository
 public interface EmailConfirmationRepository extends JpaRepository<EmailConfirmation, String> {
     Optional<EmailConfirmation> findByToken(String token);
+    Optional<EmailConfirmation> findFirstByUserIdOrderBySentAtDesc(String userId);
     void deleteByUserId(String userId);
 }

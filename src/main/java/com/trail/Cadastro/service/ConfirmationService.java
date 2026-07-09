@@ -4,6 +4,7 @@ import com.trail.Cadastro.entity.EmailConfirmation;
 import com.trail.Cadastro.entity.TermsAcceptance;
 import com.trail.Cadastro.entity.User;
 import com.trail.Cadastro.model.enums.ConfirmationStatus;
+import com.trail.Cadastro.model.enums.RegistrationStatus;
 import com.trail.Cadastro.repository.EmailConfirmationRepository;
 import com.trail.Cadastro.repository.TermsAcceptanceRepository;
 import com.trail.Cadastro.repository.UserRepository;
@@ -41,15 +42,29 @@ public class ConfirmationService {
             throw new IllegalArgumentException("Token expirado");
         }
 
-        confirmation.setStatus(ConfirmationStatus.CONFIRMADO);
-        confirmation.setConfirmedAt(LocalDateTime.now());
-        confirmationRepository.save(confirmation);
+        // Um token reenviado pode sobreviver a conta (o timer do processo deleta
+        // aos 10 min) ou chegar depois da ativacao por outro token/login social:
+        // valida o status do dono antes de avancar o processo.
+        RegistrationStatus userStatus = confirmation.getUser().getStatus();
+        if (RegistrationStatus.ATIVO.equals(userStatus)) {
+            throw new IllegalArgumentException("Email ja confirmado");
+        }
+        if (RegistrationStatus.INATIVO.equals(userStatus)) {
+            throw new IllegalArgumentException("Cadastro expirado, faca um novo cadastro");
+        }
 
+        // Publica antes de gravar CONFIRMADO: se o publish falhar, o status continua
+        // PENDENTE e o usuario pode tentar o link de novo (a guarda de "ja confirmado"
+        // bloquearia a retentativa se a ordem fosse invertida).
         zeebeClient.newPublishMessageCommand()
                 .messageName("email-confirmado")
                 .correlationKey(confirmation.getUser().getId())
                 .send()
                 .join();
+
+        confirmation.setStatus(ConfirmationStatus.CONFIRMADO);
+        confirmation.setConfirmedAt(LocalDateTime.now());
+        confirmationRepository.save(confirmation);
 
         log.info("Email confirmado para usuario: {}", confirmation.getUser().getId());
     }
