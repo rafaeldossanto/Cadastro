@@ -14,27 +14,26 @@ import java.util.UUID;
 @UtilityClass
 public class UserMapper {
 
-    public User toEntity(UserCreateRequest request, Long sequence) {
+    public User toEntity(UserCreateRequest request, String encodedPassword, Long sequence) {
         return User.builder()
                 .id(UUID.randomUUID().toString())
                 .name(request.name())
                 .email(request.email())
-                .password(request.password())
+                .password(encodedPassword)
                 .userCode(GenerateUtil.makeCode(request.name(), sequence))
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
     }
 
-    /**
-     * Cria um User a partir dos dados validados de um provedor social.
-     * Pontos importantes:
-     * - Gera o userCode (nome + sequencia) igual ao cadastro normal, para
-     *   que o usuario social possa ser encontrado/adicionado como amigo.
-     * - Entra como ATIVO: o provedor (Google/Apple) ja confirmou o email, entao
-     *   nao ha etapa de confirmacao por email.
-     * - Senha fica nula: a autenticacao e delegada ao provedor.
-     */
+    public User mapToReactivated(User user, UserCreateRequest request, String encodedPassword) {
+        user.setName(request.name());
+        user.setPassword(encodedPassword);
+        user.setStatus(RegistrationStatus.PENDENTE);
+        user.setUpdatedAt(LocalDateTime.now());
+        return user;
+    }
+
     public User toEntitySocial(ProviderUserData data, String name, Long sequence) {
         return User.builder()
                 .id(UUID.randomUUID().toString())
@@ -47,11 +46,6 @@ public class UserMapper {
                 .build();
     }
 
-    /**
-     * Cria um User para o login de desenvolvimento: espelha o usuario social
-     * (userCode gerado, ATIVO, senha nula), porem a partir de email/nome
-     * informados direto, sem provedor. So usado pelo fluxo {@code @Profile("dev")}.
-     */
     public User toEntityDev(String email, String name, Long sequence) {
         return User.builder()
                 .id(UUID.randomUUID().toString())

@@ -8,9 +8,13 @@ import com.trail.Cadastro.model.enums.RegistrationStatus;
 import com.trail.Cadastro.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -27,6 +31,10 @@ class UserServiceTest {
 
     @Mock
     private UserRepository repository;
+
+    // Encoder real (nao mock): valida que a senha persistida e um hash BCrypt.
+    @Spy
+    private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @InjectMocks
     private UserService service;
@@ -67,6 +75,20 @@ class UserServiceTest {
     }
 
     @Test
+    void create_deveSalvarSenhaComHash_naoTextoPlano() {
+        when(repository.findByEmail("rafael@email.com")).thenReturn(null);
+        when(repository.nextSequence()).thenReturn(1L);
+
+        service.create(createRequestStub());
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(repository).save(captor.capture());
+        String savedPassword = captor.getValue().getPassword();
+        assertThat(savedPassword).isNotEqualTo("senha123");
+        assertThat(passwordEncoder.matches("senha123", savedPassword)).isTrue();
+    }
+
+    @Test
     void create_deveLancarExcecao_quandoEmailJaExiste() {
         when(repository.findByEmail("rafael@email.com")).thenReturn(userStub());
 
@@ -87,7 +109,9 @@ class UserServiceTest {
         assertThat(result).isNotNull();
         assertThat(inactive.getStatus()).isEqualTo(RegistrationStatus.PENDENTE);
         assertThat(inactive.getName()).isEqualTo("Rafael Novo");
-        assertThat(inactive.getPassword()).isEqualTo("novaSenha");
+        // A senha nova tambem entra com hash, nunca em texto plano.
+        assertThat(inactive.getPassword()).isNotEqualTo("novaSenha");
+        assertThat(passwordEncoder.matches("novaSenha", inactive.getPassword())).isTrue();
         // Preserva id e codigoUsuario do registro original.
         assertThat(result.id()).isEqualTo("id-123");
         assertThat(result.userCode()).isEqualTo("rafael#1");

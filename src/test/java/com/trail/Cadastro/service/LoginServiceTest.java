@@ -9,7 +9,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 
@@ -23,11 +26,18 @@ import static org.mockito.ArgumentMatchers.any;
 @ExtendWith(MockitoExtension.class)
 class LoginServiceTest {
 
+    // Hash gerado uma unica vez: encode do BCrypt e custoso de proposito.
+    private static final String SENHA_HASH = new BCryptPasswordEncoder().encode("senha123");
+
     @Mock
     private UserRepository userRepository;
 
     @Mock
     private TokenService tokenService;
+
+    // Encoder real (nao mock): garante que a ordem raw/hash do matches esta certa.
+    @Spy
+    private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @InjectMocks
     private LoginService service;
@@ -37,7 +47,7 @@ class LoginServiceTest {
                 .id("id-123")
                 .name("Rafael")
                 .email("rafael@email.com")
-                .password("senha123")
+                .password(SENHA_HASH)
                 .userCode("rafael#1")
                 .status(status)
                 .createdAt(LocalDateTime.now())

@@ -9,9 +9,8 @@ import com.trail.Cadastro.model.enums.RegistrationStatus;
 import com.trail.Cadastro.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -22,6 +21,7 @@ import static java.util.Objects.nonNull;
 public class UserService {
 
     private final UserRepository repository;
+    private final PasswordEncoder passwordEncoder;
 
     public UserDTO create(UserCreateRequest request) {
         log.info("Iniciando processo de cadastro de usuario");
@@ -34,25 +34,17 @@ public class UserService {
         }
 
         Long sequence = repository.nextSequence();
-        User user = UserMapper.toEntity(request, sequence);
+        User user = UserMapper.toEntity(request, passwordEncoder.encode(request.password()), sequence);
         repository.save(user);
         log.info("Processo finalizado com sucesso");
         return UserMapper.toResponse(user);
     }
 
-    /**
-     * Reaproveita o registro de uma conta INATIVA (ex.: cadastro que expirou sem
-     * confirmar o email), preservando id e codigoUsuario, e reinicia como PENDENTE
-     * para o processo de confirmacao rodar de novo.
-     */
     private UserDTO reactivate(User user, UserCreateRequest request) {
-        user.setName(request.name());
-        user.setPassword(request.password());
-        user.setStatus(RegistrationStatus.PENDENTE);
-        user.setUpdatedAt(LocalDateTime.now());
-        repository.save(user);
+        User reactivated = UserMapper.mapToReactivated(user, request, passwordEncoder.encode(request.password()));
+        repository.save(reactivated);
         log.info("Cadastro reativado para conta inativa");
-        return UserMapper.toResponse(user);
+        return UserMapper.toResponse(reactivated);
     }
 
     public UserDTO update(UserUpdateRequest request, String id) {
