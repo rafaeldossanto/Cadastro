@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -54,9 +55,11 @@ import static java.util.Objects.nonNull;
 public class JwtKeyConfig {
 
     private final JwtProperties jwtProperties;
+    private final Environment environment;
 
-    public JwtKeyConfig(JwtProperties jwtProperties) {
+    public JwtKeyConfig(JwtProperties jwtProperties, Environment environment) {
         this.jwtProperties = jwtProperties;
+        this.environment = environment;
     }
 
     @Bean
@@ -90,6 +93,15 @@ public class JwtKeyConfig {
             log.info("Carregando chave RSA de arquivo: {}", path);
             return Files.readString(Path.of(path));
         }
+        // Sem caminho configurado: a chave bundled do classpath e de DEV e esta
+        // versionada no repositorio (nao e segredo). Em producao, assinar tokens
+        // com ela permitiria a qualquer um forja-los — entao aborta o boot.
+        if (isProductionProfile()) {
+            throw new IllegalStateException(
+                    "JWT_RSA_PRIVATE_KEY_PATH nao definida com o profile de producao ativo. "
+                    + "Aponte para o PEM (PKCS#8) da chave RSA privada — a chave de "
+                    + "desenvolvimento bundled nao pode assinar tokens em producao.");
+        }
         // Dev fallback: chave bundled no classpath (nao e um segredo real)
         log.warn("JWT_RSA_PRIVATE_KEY_PATH nao definida — usando chave de DESENVOLVIMENTO "
                 + "(classpath:keys/dev-private-key.pem). Defina a variavel em producao.");
@@ -121,6 +133,18 @@ public class JwtKeyConfig {
                 .keyUse(KeyUse.SIGNATURE)
                 .algorithm(JWSAlgorithm.RS256)
                 .build();
+    }
+
+    /** Producao e sinalizada pelos profiles Spring "prod"/"producao"/"production". */
+    private boolean isProductionProfile() {
+        for (String profile : environment.getActiveProfiles()) {
+            if (profile.equalsIgnoreCase("prod")
+                    || profile.equalsIgnoreCase("producao")
+                    || profile.equalsIgnoreCase("production")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String stableKid(RSAPublicKey publicKey) throws NoSuchAlgorithmException {
