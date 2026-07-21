@@ -43,13 +43,15 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public UserDTO getById(@AuthenticationPrincipal Jwt jwt, @PathVariable String id) {
+    public UserDTO getById(@AuthenticationPrincipal Jwt jwt,
+                           @PathVariable String id) {
         ensureSelf(jwt, id);
         return userService.getById(id);
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@AuthenticationPrincipal Jwt jwt, @PathVariable String id) {
+    public void delete(@AuthenticationPrincipal Jwt jwt,
+                       @PathVariable String id) {
         ensureSelf(jwt, id);
         userService.delete(id);
     }
