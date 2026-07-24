@@ -17,5 +17,11 @@ services:
     ports:
       - '26500:26500'
 
+  # Contador de falhas de login por conta (lockout temporario).
+  redis:
+    image: 'redis:7-alpine'
+    ports:
+      - '6379:6379'
+
 volumes:
   postgres_data:

@@ -28,19 +28,25 @@ public class LoginService {
     private final UserRepository userRepository;
     private final TokenService tokenService;
     private final PasswordEncoder passwordEncoder;
+    private final LoginAttemptService loginAttemptService;
 
     public AuthenticationResponse login(String email, String password) {
         log.info("Login por senha para {}", email);
 
+        loginAttemptService.assertNotBlocked(email);
+
         User user = userRepository.findByEmail(email);
         if (isNull(user) || isNull(user.getPassword()) || !passwordEncoder.matches(password, user.getPassword())
                 || RegistrationStatus.INATIVO.equals(user.getStatus())) {
+            loginAttemptService.recordFailure(email);
             throw new IllegalArgumentException("Email ou senha invalidos");
         }
 
         if (RegistrationStatus.PENDENTE.equals(user.getStatus())) {
             throw new IllegalArgumentException("Confirme seu email para ativar a conta");
         }
+
+        loginAttemptService.reset(email);
 
         IssuedToken token = tokenService.issue(user);
         return AuthenticationMapper.toResponse(user, token);

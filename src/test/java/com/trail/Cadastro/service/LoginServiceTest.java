@@ -2,6 +2,7 @@ package com.trail.Cadastro.service;
 
 import com.trail.Cadastro.auth.IssuedToken;
 import com.trail.Cadastro.entity.User;
+import com.trail.Cadastro.exception.TooManyAttemptsException;
 import com.trail.Cadastro.model.dto.response.AuthenticationResponse;
 import com.trail.Cadastro.model.enums.RegistrationStatus;
 import com.trail.Cadastro.repository.UserRepository;
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,6 +40,9 @@ class LoginServiceTest {
     // Encoder real (nao mock): garante que a ordem raw/hash do matches esta certa.
     @Spy
     private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    @Mock
+    private LoginAttemptService loginAttemptService;
 
     @InjectMocks
     private LoginService service;
@@ -127,5 +132,40 @@ class LoginServiceTest {
                 .hasMessage("Email ou senha invalidos");
 
         verify(tokenService, never()).issue(any());
+    }
+
+    @Test
+    void login_deveBloquear_quandoContaExcedeuTentativas() {
+        doThrow(new TooManyAttemptsException("Muitas tentativas de login. Tente novamente em alguns minutos."))
+                .when(loginAttemptService).assertNotBlocked("rafael@email.com");
+
+        assertThatThrownBy(() -> service.login("rafael@email.com", "senha123"))
+                .isInstanceOf(TooManyAttemptsException.class);
+
+        // Nem toca o banco nem gera BCrypt/token: a trava corta antes.
+        verify(userRepository, never()).findByEmail(any());
+        verify(tokenService, never()).issue(any());
+    }
+
+    @Test
+    void login_deveRegistrarFalha_quandoSenhaIncorreta() {
+        when(userRepository.findByEmail("rafael@email.com"))
+                .thenReturn(userStub(RegistrationStatus.ATIVO));
+
+        assertThatThrownBy(() -> service.login("rafael@email.com", "senha-errada"))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        verify(loginAttemptService).recordFailure("rafael@email.com");
+    }
+
+    @Test
+    void login_deveZerarContador_quandoLoginBemSucedido() {
+        User user = userStub(RegistrationStatus.ATIVO);
+        when(userRepository.findByEmail("rafael@email.com")).thenReturn(user);
+        when(tokenService.issue(user)).thenReturn(new IssuedToken("token-jwt", 7200L));
+
+        service.login("rafael@email.com", "senha123");
+
+        verify(loginAttemptService).reset("rafael@email.com");
     }
 }

@@ -8,6 +8,13 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
+  # Redis: contador de falhas de login por conta (lockout temporario). Lettuce
+  # conecta sob demanda; se o Redis estiver fora, o lockout adota fail-open.
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
   jpa:
     hibernate:
       # Em dev, o Hibernate cria/atualiza as tabelas. Em producao, troque para
@@ -86,3 +93,9 @@ app:
     # pelo Kubernetes ou Secret Manager). Dev: deixe vazio para usar a chave bundled
     # em classpath:keys/dev-private-key.pem (nao e um segredo real).
     rsa-private-key-path: ${JWT_RSA_PRIVATE_KEY_PATH:}
+
+# Bloqueio temporario de login apos varias falhas seguidas para a mesma conta.
+login-lockout:
+  enabled: ${LOGIN_LOCKOUT_ENABLED:true}
+  max-attempts: ${LOGIN_LOCKOUT_MAX_ATTEMPTS:5}
+  block-seconds: ${LOGIN_LOCKOUT_BLOCK_SECONDS:900}
