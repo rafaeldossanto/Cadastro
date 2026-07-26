@@ -48,6 +48,9 @@ dependencies {
 	// Valida ID tokens (JWT) de provedores sociais contra o JWKS publico deles.
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 	// Migrations versionadas do schema (sequence do codigoUsuario, etc).
+	// Boot 4 modularizou o Flyway: sem este starter a auto-config nao roda as
+	// migrations (mesmo bug que o loc teve) — flyway-core sozinho nao basta.
+	implementation 'org.springframework.boot:spring-boot-flyway'
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-database-postgresql'
 	implementation 'io.camunda.spring:spring-boot-starter-camunda:8.5.0'

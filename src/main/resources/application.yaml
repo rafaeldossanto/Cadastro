@@ -52,11 +52,15 @@ spring:
           starttls:
             enable: true
 
+# Orquestrador do processo de cadastro (email de confirmacao + termos + timer
+# de limpeza). Sem Zeebe alcancavel o POST /usuario falha — em prod o endereco
+# vem do compose (zeebe:26500); em dev suba o broker do docker-compose.dev.yml
+# da trilha-infra.
 camunda:
   client:
     mode: simple
     zeebe:
-      gateway-address: localhost:26500
+      gateway-address: ${ZEEBE_GATEWAY_ADDRESS:localhost:26500}
       plaintext: true
 
 server:
