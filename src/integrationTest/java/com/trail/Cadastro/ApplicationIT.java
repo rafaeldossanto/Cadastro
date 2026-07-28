@@ -1,11 +1,13 @@
 package com.trail.Cadastro;
 
+import io.camunda.zeebe.client.ZeebeClient;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -19,6 +21,11 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * lento e fragil. A orquestracao Camunda e validada separadamente (os workers
  * ja tem testes de unidade); aqui o foco e a inicializacao da aplicacao e a
  * persistencia.
+ *
+ * Desligar o autostart, porem, tambem remove o bean {@code ZeebeClient} — e
+ * RegistrationService/SocialAuthenticationService o recebem no construtor, o que
+ * derrubava o contexto com NoSuchBeanDefinitionException. O mock abaixo satisfaz
+ * a injecao sem abrir conexao com broker nenhum.
  */
 @Tag("integracao")
 @SpringBootTest
@@ -29,6 +36,9 @@ class ApplicationIT {
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("trilha_cadastro");
+
+    @MockitoBean
+    private ZeebeClient zeebeClient;
 
     @DynamicPropertySource
     static void props(DynamicPropertyRegistry registry) {
