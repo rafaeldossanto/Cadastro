@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -114,11 +115,28 @@ class LoginServiceTest {
         when(userRepository.findByEmail("rafael@email.com"))
                 .thenReturn(userStub(RegistrationStatus.PENDENTE));
 
+        // Mesma mensagem dos outros casos: dizer "confirme seu email" revelaria
+        // que o endereco esta cadastrado, permitindo enumerar a base.
         assertThatThrownBy(() -> service.login("rafael@email.com", "senha123"))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Confirme seu email para ativar a conta");
+                .hasMessage("Email ou senha invalidos");
 
         verify(tokenService, never()).issue(any());
+    }
+
+    @Test
+    void login_naoDeveDistinguirEmailInexistenteDeContaPendente() {
+        // Regressao anti-enumeracao: as duas respostas tem que ser identicas.
+        when(userRepository.findByEmail("naoexiste@email.com")).thenReturn(null);
+        when(userRepository.findByEmail("pendente@email.com"))
+                .thenReturn(userStub(RegistrationStatus.PENDENTE));
+
+        String inexistente = catchThrowable(
+                () -> service.login("naoexiste@email.com", "senha123")).getMessage();
+        String pendente = catchThrowable(
+                () -> service.login("pendente@email.com", "senha123")).getMessage();
+
+        assertThat(inexistente).isEqualTo(pendente);
     }
 
     @Test

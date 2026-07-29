@@ -15,10 +15,17 @@ import static java.util.Objects.isNull;
 
 /**
  * Login por email e senha. A senha informada e comparada com o hash BCrypt
- * persistido no cadastro. Exige conta ATIVA: PENDENTE ainda nao confirmou o
- * email; INATIVO foi desativada (responde como credencial invalida para nao
- * revelar o estado da conta). Usuarios sociais tem senha nula e nao autenticam
- * por aqui.
+ * persistido no cadastro. Usuarios sociais tem senha nula e nao autenticam aqui.
+ *
+ * <p><b>Resposta unica para toda falha.</b> Email inexistente, senha errada,
+ * conta INATIVA e conta PENDENTE devolvem a MESMA mensagem. Distinguir os casos
+ * permitiria enumerar quais emails estao cadastrados na base — basta tentar
+ * login com uma lista e separar as respostas.
+ *
+ * <p>O custo e de UX: quem se cadastrou e nao confirmou o email nao descobre o
+ * motivo por aqui. Por isso a tela de login precisa manter visivel a opcao de
+ * reenviar a confirmacao ({@code POST /auth/reenviar-email}), que continua
+ * informando o estado real para quem prova ser o dono do endereco.
  */
 @Service
 @RequiredArgsConstructor
@@ -30,6 +37,9 @@ public class LoginService {
     private final PasswordEncoder passwordEncoder;
     private final LoginAttemptService loginAttemptService;
 
+    /** Mensagem unica de falha — nao revela se o email existe nem o estado da conta. */
+    private static final String CREDENCIAL_INVALIDA = "Email ou senha invalidos";
+
     public AuthenticationResponse login(String email, String password) {
         log.info("Login por senha para {}", email);
 
@@ -37,13 +47,12 @@ public class LoginService {
 
         User user = userRepository.findByEmail(email);
         if (isNull(user) || isNull(user.getPassword()) || !passwordEncoder.matches(password, user.getPassword())
-                || RegistrationStatus.INATIVO.equals(user.getStatus())) {
+                || RegistrationStatus.INATIVO.equals(user.getStatus())
+                || RegistrationStatus.PENDENTE.equals(user.getStatus())) {
+            // A conta PENDENTE entra aqui de proposito: informar "confirme seu
+            // email" confirmaria ao atacante que o endereco esta cadastrado.
             loginAttemptService.recordFailure(email);
-            throw new IllegalArgumentException("Email ou senha invalidos");
-        }
-
-        if (RegistrationStatus.PENDENTE.equals(user.getStatus())) {
-            throw new IllegalArgumentException("Confirme seu email para ativar a conta");
+            throw new IllegalArgumentException(CREDENCIAL_INVALIDA);
         }
 
         loginAttemptService.reset(email);
