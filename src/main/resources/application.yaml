@@ -3,7 +3,11 @@ spring:
     name: Cadastro
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/trilha_cadastro
+    # Banco COMPARTILHADO com o servico APP. O Cadastro e o dono da tabela
+    # 'usuario'; o APP a le como view read-only (entidade User @Immutable). Com
+    # bancos separados a copia do lado do APP nasce vazia e a busca de usuario,
+    # o seguir por codigo e o nome do autor no feed param de funcionar.
+    url: jdbc:postgresql://localhost:5432/trisha
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
