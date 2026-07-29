@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -29,6 +30,10 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  */
 @Tag("integracao")
 @SpringBootTest
+// Profile de desenvolvimento explicito: sem ele o JwtKeyConfig aborta o boot por
+// falta de JWT_RSA_PRIVATE_KEY_PATH (fail closed), que e exatamente o
+// comportamento desejado em qualquer ambiente que nao seja dev/test.
+@ActiveProfiles("test")
 @Testcontainers
 class ApplicationIT {
 

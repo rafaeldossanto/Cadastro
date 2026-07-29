@@ -3,8 +3,18 @@
 ## dev-private-key.pem
 
 Par RSA 2048-bit em formato PKCS#8, **exclusivo para desenvolvimento local**.
-Este arquivo está intencionalmente versionado no repositório — **não é um segredo real**.
-Em produção, não use este arquivo; injete a chave via `JWT_RSA_PRIVATE_KEY_PATH`.
+Este arquivo está intencionalmente versionado num repositório **público** — ou seja,
+**não é um segredo**: qualquer pessoa pode baixá-lo e forjar tokens de qualquer
+usuário em uma instância que o esteja usando.
+
+Por isso o `JwtKeyConfig` é **fail closed**: esta chave só é carregada quando um
+profile de desenvolvimento (`dev` ou `test`) está **explicitamente ativo**. Em
+qualquer outro caso — inclusive quando nenhum profile está ativo — o boot aborta
+exigindo `JWT_RSA_PRIVATE_KEY_PATH`.
+
+A regra está travada por teste em `JwtKeyConfigTest`. Se você rodar o serviço
+localmente sem profile, ele vai falhar de propósito: use
+`SPRING_PROFILES_ACTIVE=dev`.
 
 ## Produção
 

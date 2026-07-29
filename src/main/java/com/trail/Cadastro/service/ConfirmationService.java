@@ -27,7 +27,9 @@ public class ConfirmationService {
     private final ZeebeClient zeebeClient;
 
     public void confirmEmail(String token) {
-        log.info("Confirmando email com token: {}", token);
+        // O token NAO vai para o log: ele e a credencial que ativa a conta. Quem
+        // lesse o log (ou um agregador de logs) poderia confirmar conta alheia.
+        log.info("Confirmando email");
 
         EmailConfirmation confirmation = confirmationRepository.findByToken(token)
                 .orElseThrow(() -> new IllegalArgumentException("Token invalido"));

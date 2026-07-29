@@ -31,6 +31,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPublicKeySpec;
+import java.util.Arrays;
 import java.util.Base64;
 
 import static java.util.Objects.isNull;
@@ -45,14 +46,26 @@ import static java.util.Objects.nonNull;
  * do SHA-256 da chave publica, garantindo estabilidade entre restarts — ao
  * contrario da geracao em memoria, um restart nao invalida tokens em circulacao.
  *
- * <p>Em dev, usa {@code classpath:keys/dev-private-key.pem} (chave bundled no
- * repositorio, nao e um segredo real). Em producao, defina
- * {@code JWT_RSA_PRIVATE_KEY_PATH} apontando para o arquivo PEM seguro.
+ * <p><b>Fail closed.</b> A chave e SEMPRE obrigatoria via
+ * {@code JWT_RSA_PRIVATE_KEY_PATH}. A unica excecao e o par de profiles de
+ * desenvolvimento ({@code dev}/{@code test}), onde cai na chave bundled em
+ * {@code classpath:keys/dev-private-key.pem} — que esta versionada num
+ * repositorio PUBLICO e, portanto, nao e segredo nenhum.
+ *
+ * <p>A inversao e deliberada: antes o fallback valia para qualquer ambiente que
+ * nao fosse explicitamente {@code prod}, entao um deploy sem
+ * {@code SPRING_PROFILES_ACTIVE} definido (um {@code docker run} manual, um
+ * profile escrito errado, um {@code staging}) subia normalmente assinando tokens
+ * com a chave publica do GitHub — qualquer pessoa poderia forjar o JWT de
+ * qualquer usuario. Agora o caminho perigoso exige um profile de dev explicito;
+ * o silencio aborta o boot.
  */
 @Configuration
 @Slf4j
 @EnableConfigurationProperties(JwtProperties.class)
 public class JwtKeyConfig {
+
+    private static final String[] DEVELOPMENT_PROFILES = {"dev", "test"};
 
     private final JwtProperties jwtProperties;
     private final Environment environment;
@@ -94,17 +107,25 @@ public class JwtKeyConfig {
             return Files.readString(Path.of(path));
         }
         // Sem caminho configurado: a chave bundled do classpath e de DEV e esta
-        // versionada no repositorio (nao e segredo). Em producao, assinar tokens
-        // com ela permitiria a qualquer um forja-los — entao aborta o boot.
-        if (isProductionProfile()) {
+        // versionada num repositorio PUBLICO. Assinar tokens com ela permite a
+        // qualquer um forja-los, entao ela so vale sob um profile de dev
+        // EXPLICITO. Qualquer outro caso — inclusive nenhum profile ativo —
+        // aborta o boot em vez de seguir com uma chave conhecida.
+        if (!isDevelopmentProfile()) {
             throw new IllegalStateException(
-                    "JWT_RSA_PRIVATE_KEY_PATH nao definida com o profile de producao ativo. "
-                    + "Aponte para o PEM (PKCS#8) da chave RSA privada — a chave de "
-                    + "desenvolvimento bundled nao pode assinar tokens em producao.");
+                    "JWT_RSA_PRIVATE_KEY_PATH nao definida. Aponte para o PEM (PKCS#8) da "
+                    + "chave RSA privada. A chave bundled em classpath:keys/dev-private-key.pem "
+                    + "esta versionada num repositorio publico e so pode ser usada com um dos "
+                    + "profiles de desenvolvimento ativo (" + String.join(", ", DEVELOPMENT_PROFILES)
+                    + "). Profiles ativos agora: "
+                    + Arrays.toString(environment.getActiveProfiles()) + ".");
         }
         // Dev fallback: chave bundled no classpath (nao e um segredo real)
-        log.warn("JWT_RSA_PRIVATE_KEY_PATH nao definida — usando chave de DESENVOLVIMENTO "
-                + "(classpath:keys/dev-private-key.pem). Defina a variavel em producao.");
+        log.warn("Profile de desenvolvimento {} ativo e JWT_RSA_PRIVATE_KEY_PATH nao definida — "
+                        + "assinando tokens com a chave PUBLICA do repositorio "
+                        + "(classpath:keys/dev-private-key.pem). Qualquer pessoa pode forjar tokens "
+                        + "nesta instancia; jamais exponha este processo na internet.",
+                Arrays.toString(environment.getActiveProfiles()));
         try (InputStream is = getClass().getResourceAsStream("/keys/dev-private-key.pem")) {
             if (isNull(is)) {
                 throw new IllegalStateException(
@@ -136,12 +157,17 @@ public class JwtKeyConfig {
     }
 
     /** Producao e sinalizada pelos profiles Spring "prod"/"producao"/"production". */
-    private boolean isProductionProfile() {
+    /**
+     * Unicos profiles em que a chave bundled do repositorio pode assinar tokens.
+     * Nao inclui o caso "nenhum profile ativo" de proposito — e justamente o
+     * cenario de um deploy mal configurado.
+     */
+    private boolean isDevelopmentProfile() {
         for (String profile : environment.getActiveProfiles()) {
-            if (profile.equalsIgnoreCase("prod")
-                    || profile.equalsIgnoreCase("producao")
-                    || profile.equalsIgnoreCase("production")) {
-                return true;
+            for (String allowed : DEVELOPMENT_PROFILES) {
+                if (profile.equalsIgnoreCase(allowed)) {
+                    return true;
+                }
             }
         }
         return false;
