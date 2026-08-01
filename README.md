@@ -1,6 +1,6 @@
 # Cadastro
 
-Serviço de **identidade e autenticação** da Trilha. É o emissor central de tokens: cadastra usuários, valida login social (Google/Apple), emite o *access token* da aplicação (JWT RSA) e publica a chave pública (JWKS) que os demais serviços usam para validar esse token. Orquestra o fluxo de cadastro com Camunda/Zeebe.
+Serviço de **identidade e autenticação** da Trilha. É o emissor central de tokens: cadastra usuários, valida login social (Google/Apple), emite o *access token* da aplicação (JWT RSA) e publica a chave pública (JWKS) que os demais serviços usam para validar esse token.
 
 - **Porta:** `8080`
 - **Pacote raiz:** `com.trail.Cadastro`
@@ -12,20 +12,27 @@ Serviço de **identidade e autenticação** da Trilha. É o emissor central de t
 - **Emissor de JWT**: assina o access token da app com chave RSA (carregada de um PEM estável — configure em produção, senão um restart invalida os tokens) e expõe o **JWKS** em `GET /oauth2/jwks`.
 - **Login social**: valida o ID token do provedor (Google/Apple) contra o JWKS público deles (issuer + audience/client-id), cria/vincula a conta e devolve o token da app.
 - **Dev-login** (`@Profile("dev")`): atalho de login por email/nome, sem provedor social. Não existe em produção.
-- **Confirmação de email** por SMTP (`JavaMailSender`) com token de expiração.
-- **Orquestração Camunda/Zeebe**: workers para salvar dados, enviar email, liberar conta e deletar dados por timeout.
+- **Confirmação de email** por SMTP (`JavaMailSender`) com token de expiração. O envio sai fora da requisição (`@Async`, depois do commit) e tem retentativa (`@Retryable`), então o `POST /usuario` não espera o SMTP.
 - Também atua como **resource server** (defense-in-depth): valida o próprio Bearer com a chave pública local.
+
+## O fluxo de cadastro
+
+A conta nasce `PENDENTE` e só vira `ATIVO` quando o **email é confirmado** e os **termos são aceitos** — em qualquer ordem, cada etapa tentando fechar o cadastro ao terminar. Passado o prazo (`app.cadastro.expiracao-minutos`, default 10) sem as duas, `RegistrationCleanupJob` desativa a conta e libera o email para novo cadastro.
+
+A ativação é um `UPDATE` condicional (`UserRepository.activateIfPending`): confirmar email e aceitar termos podem chegar simultâneos — o link do email costuma ser aberto em outro dispositivo — e quem arbitra é o banco, não a aplicação.
+
+> Isso era um processo BPMN no Camunda 8 / Zeebe até 01/08/2026. Ver `Docs/Decisões/Remoção do Camunda.md` para o porquê da remoção.
 
 ## Stack
 
-Spring Boot 4.0.6 · Java 21 · Spring Data JPA · OAuth2 Resource Server · Spring Mail · Flyway · Camunda/Zeebe (`spring-boot-starter-camunda` 8.5.0) · Lombok · logs JSON (logstash-logback-encoder).
+Spring Boot 4.0.6 · Java 21 · Spring Data JPA · OAuth2 Resource Server · Spring Mail · Flyway · Spring Retry · Lombok · logs JSON (logstash-logback-encoder).
 
 ## Infra (compose.yaml)
 
 | Serviço | Imagem | Porta |
 |---|---|---|
 | PostgreSQL | `postgres:16` | `5432` |
-| Zeebe (Camunda) | `camunda/zeebe:8.5.0` | `26500` |
+| Redis (lockout de login) | `redis:7-alpine` | `6379` |
 
 Em **dev**, `spring-boot-docker-compose` sobe o `compose.yaml` automaticamente ao iniciar a aplicação.
 
@@ -65,6 +72,6 @@ Perfil de produção: `application-prod` (ative com `SPRING_PROFILES_ACTIVE=prod
 
 ## Convenções
 
-Identificadores do código em **inglês**; **contrato (JSON), rotas e colunas do banco em português** (mantidos via `@JsonProperty`/`@Column`). Claims do JWT (`codigoUsuario`, `email`) e job-types/variáveis do Camunda são parte do contrato e permanecem em PT. Correlação de requisições via header `X-Trace-Id` (no MDC dos logs).
+Identificadores do código em **inglês**; **contrato (JSON), rotas e colunas do banco em português** (mantidos via `@JsonProperty`/`@Column`). Claims do JWT (`codigoUsuario`, `email`) são parte do contrato e permanecem em PT. Correlação de requisições via header `X-Trace-Id` (no MDC dos logs).
 
 > Parte da arquitetura da Trilha: **Cadastro (8080)** · APP (8081) · loc (8082) · midia (8083) · BFF (8090).

@@ -53,7 +53,6 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-flyway'
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-database-postgresql'
-	implementation 'io.camunda.spring:spring-boot-starter-camunda:8.5.0'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
 	runtimeOnly 'org.postgresql:postgresql'
@@ -67,7 +66,7 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testAnnotationProcessor 'org.projectlombok:lombok'
 
-	// Testes de integracao (Testcontainers Postgres; Camunda/Zeebe desligado no perfil)
+	// Testes de integracao (Testcontainers Postgres)
 	integrationTestImplementation 'org.springframework.boot:spring-boot-testcontainers'
 	integrationTestImplementation "org.testcontainers:junit-jupiter:${testcontainersVersion}"
 	integrationTestImplementation "org.testcontainers:postgresql:${testcontainersVersion}"

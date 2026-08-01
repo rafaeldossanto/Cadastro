@@ -11,13 +11,6 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  zeebe:
-    image: 'camunda/zeebe:8.5.0'
-    environment:
-      - 'ZEEBE_BROKER_GATEWAY_SECURITY_ENABLED=false'
-    ports:
-      - '26500:26500'
-
   # Contador de falhas de login por conta (lockout temporario).
   redis:
     image: 'redis:7-alpine'

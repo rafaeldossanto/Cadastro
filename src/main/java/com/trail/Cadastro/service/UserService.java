@@ -78,15 +78,6 @@ public class UserService {
         );
     }
 
-    public void activate(String id) {
-        log.info("Iniciando processo de ativacao de usuario");
-        User user = repository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
-        user.setStatus(RegistrationStatus.ATIVO);
-        repository.save(user);
-        log.info("Usuario ativado com sucesso");
-    }
-
     public void delete(String id) {
         log.info("Iniciando processo de desativacao de usuario");
         User user = repository.findById(id)

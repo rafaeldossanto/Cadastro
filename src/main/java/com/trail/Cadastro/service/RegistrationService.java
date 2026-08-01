@@ -2,49 +2,37 @@ package com.trail.Cadastro.service;
 
 import com.trail.Cadastro.model.dto.request.UserCreateRequest;
 import com.trail.Cadastro.model.dto.response.UserDTO;
-import io.camunda.zeebe.client.ZeebeClient;
+import com.trail.Cadastro.model.event.UserRegisteredEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Orquestra o cadastro: persiste o usuario (UserService) e inicia a instancia
- * do processo Camunda que conduz o restante — envio/confirmacao de email e
- * aceite de termos em paralelo, liberando a conta ao final ou deletando os
- * dados se o prazo do processo expirar.
+ * Persiste o usuario (UserService) e publica o evento que dispara o email de
+ * confirmacao. O email sai fora da requisicao e so depois do commit, entao o
+ * POST /usuario nao espera o SMTP.
+ *
+ * O restante do cadastro nao passa por aqui: confirmacao de email e aceite de
+ * termos sao conduzidos por ConfirmationService, e o prazo de confirmacao por
+ * RegistrationCleanupJob.
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class RegistrationService {
 
-    private static final String PROCESS_ID = "cadastro-usuario";
-
     private final UserService userService;
-    private final ZeebeClient zeebeClient;
+    private final ApplicationEventPublisher eventPublisher;
 
+    @Transactional
     public UserDTO register(UserCreateRequest request) {
         UserDTO user = userService.create(request);
 
-        try {
-            zeebeClient.newCreateInstanceCommand()
-                    .bpmnProcessId(PROCESS_ID)
-                    .latestVersion()
-                    .variables(Map.of(
-                            "usuarioId", user.id(),
-                            "email", user.email()))
-                    .send()
-                    .join();
-        } catch (Exception e) {
-            // Sem o processo nao ha email de confirmacao nem timer de limpeza:
-            // desativa o registro para liberar o email para nova tentativa.
-            userService.delete(user.id());
-            throw new IllegalStateException("Nao foi possivel iniciar o processo de cadastro", e);
-        }
+        eventPublisher.publishEvent(new UserRegisteredEvent(user.id(), user.email()));
 
-        log.info("Processo de cadastro iniciado para usuario: {}", user.id());
+        log.info("Cadastro iniciado para usuario: {}", user.id());
         return user;
     }
 }

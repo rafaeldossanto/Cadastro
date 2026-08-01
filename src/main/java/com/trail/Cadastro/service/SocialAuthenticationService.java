@@ -12,7 +12,6 @@ import com.trail.Cadastro.model.enums.AuthProvider;
 import com.trail.Cadastro.model.enums.RegistrationStatus;
 import com.trail.Cadastro.repository.LinkedAccountRepository;
 import com.trail.Cadastro.repository.UserRepository;
-import io.camunda.zeebe.client.ZeebeClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,18 +32,15 @@ public class SocialAuthenticationService {
     private final UserRepository userRepository;
     private final LinkedAccountRepository linkedAccountRepository;
     private final TokenService tokenService;
-    private final ZeebeClient zeebeClient;
     private final Map<AuthProvider, SocialTokenVerifier> verifiers;
 
     public SocialAuthenticationService(UserRepository userRepository,
                                        LinkedAccountRepository linkedAccountRepository,
                                        TokenService tokenService,
-                                       ZeebeClient zeebeClient,
                                        List<SocialTokenVerifier> availableVerifiers) {
         this.userRepository = userRepository;
         this.linkedAccountRepository = linkedAccountRepository;
         this.tokenService = tokenService;
-        this.zeebeClient = zeebeClient;
         this.verifiers = new EnumMap<>(AuthProvider.class);
         availableVerifiers.forEach(v -> this.verifiers.put(v.provider(), v));
     }
@@ -68,21 +64,16 @@ public class SocialAuthenticationService {
     /**
      * Normaliza o status antes de emitir o token — o social nunca autentica uma
      * conta que nao esteja ATIVA:
-     * - PENDENTE: o provedor ja confirmou o email, entao publica as mensagens que
-     *   encerram o processo de cadastro pendente (o social nao exige aceite de
-     *   termos, mesma convencao do usuario criado direto pelo social) e ativa.
-     *   Sem isso o timer do processo deletaria a conta em uso aos 10 minutos.
-     * - INATIVO: conta desativada (timeout de confirmacao ou delecao) recuperada
-     *   pelo login social, espelhando o reaproveitamento do create.
+     * - PENDENTE: o provedor ja confirmou o email, entao a conta e ativada
+     *   direto, sem exigir confirmacao nem aceite de termos (mesma convencao do
+     *   usuario criado direto pelo social). Sem isso RegistrationCleanupJob
+     *   desativaria a conta em uso ao fim do prazo de confirmacao.
+     * - INATIVO: conta desativada (prazo de confirmacao estourado ou delecao)
+     *   recuperada pelo login social, espelhando o reaproveitamento do create.
      */
     private User ensureActive(User user) {
         if (RegistrationStatus.ATIVO.equals(user.getStatus())) {
             return user;
-        }
-
-        if (RegistrationStatus.PENDENTE.equals(user.getStatus())) {
-            publishMessage("email-confirmado", user.getId());
-            publishMessage("termos-aceitos", user.getId());
         }
 
         user.setStatus(RegistrationStatus.ATIVO);
@@ -90,14 +81,6 @@ public class SocialAuthenticationService {
         User saved = userRepository.save(user);
         log.info("Usuario {} ativado no login social", saved.getId());
         return saved;
-    }
-
-    private void publishMessage(String messageName, String userId) {
-        zeebeClient.newPublishMessageCommand()
-                .messageName(messageName)
-                .correlationKey(userId)
-                .send()
-                .join();
     }
 
     private ProviderUserData verify(AuthProvider provider, String idToken) {

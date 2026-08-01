@@ -3,16 +3,17 @@ package com.trail.Cadastro.service;
 import com.trail.Cadastro.model.dto.request.UserCreateRequest;
 import com.trail.Cadastro.model.dto.response.UserDTO;
 import com.trail.Cadastro.model.enums.RegistrationStatus;
-import io.camunda.zeebe.client.ZeebeClient;
+import com.trail.Cadastro.model.event.UserRegisteredEvent;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Answers;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -22,13 +23,14 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("RegistrationService")
 class RegistrationServiceTest {
 
     @Mock
     private UserService userService;
 
-    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-    private ZeebeClient zeebeClient;
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private RegistrationService service;
@@ -50,7 +52,8 @@ class RegistrationServiceTest {
     }
 
     @Test
-    void register_deveCriarUsuarioEIniciarProcesso() {
+    @DisplayName("cria o usuario e publica o evento que dispara o email de confirmacao")
+    void register_deveCriarUsuarioEPublicarEvento() {
         when(userService.create(any())).thenReturn(userDTOStub());
 
         UserDTO result = service.register(createRequestStub());
@@ -58,33 +61,20 @@ class RegistrationServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.id()).isEqualTo("id-123");
         verify(userService).create(any(UserCreateRequest.class));
-        verify(zeebeClient.newCreateInstanceCommand()
-                .bpmnProcessId("cadastro-usuario")
-                .latestVersion())
-                .variables(Map.of("usuarioId", "id-123", "email", "rafael@email.com"));
+
+        ArgumentCaptor<UserRegisteredEvent> captor = ArgumentCaptor.forClass(UserRegisteredEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        assertThat(captor.getValue().userId()).isEqualTo("id-123");
+        assertThat(captor.getValue().email()).isEqualTo("rafael@email.com");
     }
 
+    /**
+     * Sem orquestrador externo nao ha mais o que compensar: se a criacao falha, a
+     * transacao reverte sozinha e nenhum email e disparado.
+     */
     @Test
-    void register_deveDesativarUsuario_quandoInicioDoProcessoFalha() {
-        when(userService.create(any())).thenReturn(userDTOStub());
-        when(zeebeClient.newCreateInstanceCommand()
-                .bpmnProcessId("cadastro-usuario")
-                .latestVersion()
-                .variables(Map.of("usuarioId", "id-123", "email", "rafael@email.com"))
-                .send()
-                .join())
-                .thenThrow(new RuntimeException("zeebe indisponivel"));
-
-        assertThatThrownBy(() -> service.register(createRequestStub()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("processo de cadastro");
-
-        // Compensacao: desativa o registro para liberar o email para nova tentativa.
-        verify(userService).delete("id-123");
-    }
-
-    @Test
-    void register_naoDeveIniciarProcesso_quandoCriacaoFalha() {
+    @DisplayName("nao publica evento quando a criacao do usuario falha")
+    void register_naoDevePublicarEvento_quandoCriacaoFalha() {
         when(userService.create(any()))
                 .thenThrow(new IllegalArgumentException("Conta com esse email ja existente"));
 
@@ -92,6 +82,6 @@ class RegistrationServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Conta com esse email ja existente");
 
-        verifyNoInteractions(zeebeClient);
+        verifyNoInteractions(eventPublisher);
     }
 }

@@ -50,17 +50,6 @@ spring:
           starttls:
             enable: true
 
-# Orquestrador do processo de cadastro (email de confirmacao + termos + timer
-# de limpeza). Sem Zeebe alcancavel o POST /usuario falha — em prod o endereco
-# vem do compose (zeebe:26500); em dev suba o broker do docker-compose.dev.yml
-# da trilha-infra.
-camunda:
-  client:
-    mode: simple
-    zeebe:
-      gateway-address: ${ZEEBE_GATEWAY_ADDRESS:localhost:26500}
-      plaintext: true
-
 server:
   port: 8080
 
@@ -86,6 +75,13 @@ app:
   email:
     remetente: ${MAIL_FROM:nao-responda@trilha.com}
     confirmacao-url: ${EMAIL_CONFIRMACAO_URL:http://localhost:8080/auth/confirmar-email}
+  # Prazo para confirmar o email e aceitar os termos. Estourado o prazo,
+  # RegistrationCleanupJob desativa a conta (status INATIVO) e o email volta a
+  # ficar disponivel para um novo cadastro. Deve acompanhar o prazo do token de
+  # confirmacao (EmailService: expiresAt = envio + 10 min).
+  cadastro:
+    expiracao-minutos: ${CADASTRO_EXPIRACAO_MINUTOS:10}
+    intervalo-limpeza-ms: ${CADASTRO_INTERVALO_LIMPEZA_MS:60000}
   # Token de sessao emitido pela aplicacao (assinado com a chave RSA local; os
   # demais servicos validam pelo JWKS publicado em /oauth2/jwks).
   jwt:

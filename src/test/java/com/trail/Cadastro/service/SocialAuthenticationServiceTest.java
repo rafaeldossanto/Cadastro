@@ -10,12 +10,10 @@ import com.trail.Cadastro.model.enums.AuthProvider;
 import com.trail.Cadastro.model.enums.RegistrationStatus;
 import com.trail.Cadastro.repository.LinkedAccountRepository;
 import com.trail.Cadastro.repository.UserRepository;
-import io.camunda.zeebe.client.ZeebeClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -47,8 +45,6 @@ class SocialAuthenticationServiceTest {
     private SocialTokenVerifier googleVerifier;
     @Mock
     private TokenService tokenService;
-    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-    private ZeebeClient zeebeClient;
 
     private SocialAuthenticationService service;
 
@@ -56,7 +52,7 @@ class SocialAuthenticationServiceTest {
     void setUp() {
         when(googleVerifier.provider()).thenReturn(AuthProvider.GOOGLE);
         service = new SocialAuthenticationService(
-                userRepository, linkedAccountRepository, tokenService, zeebeClient, List.of(googleVerifier));
+                userRepository, linkedAccountRepository, tokenService, List.of(googleVerifier));
     }
 
     private ProviderUserData data() {
@@ -133,8 +129,8 @@ class SocialAuthenticationServiceTest {
     }
 
     @Test
-    @DisplayName("conta PENDENTE -> publica email-confirmado e termos-aceitos (encerra o processo) e ativa antes de logar")
-    void deveAtivarContaPendenteEncerrandoOProcesso() {
+    @DisplayName("conta PENDENTE -> ativa direto antes de logar (o provedor ja confirmou o email)")
+    void deveAtivarContaPendente() {
         User pending = existingUser();
         pending.setStatus(RegistrationStatus.PENDENTE);
 
@@ -149,15 +145,11 @@ class SocialAuthenticationServiceTest {
 
         assertThat(response.user().id()).isEqualTo("usuario-1");
         assertThat(pending.getStatus()).isEqualTo(RegistrationStatus.ATIVO);
-        verify(zeebeClient.newPublishMessageCommand().messageName("email-confirmado"))
-                .correlationKey("usuario-1");
-        verify(zeebeClient.newPublishMessageCommand().messageName("termos-aceitos"))
-                .correlationKey("usuario-1");
         verify(userRepository).save(pending);
     }
 
     @Test
-    @DisplayName("conta INATIVA com vinculo -> reativa como ATIVO sem publicar mensagens (processo ja encerrou)")
+    @DisplayName("conta INATIVA com vinculo -> reativa como ATIVO")
     void deveReativarContaInativa() {
         User inactive = existingUser();
         inactive.setStatus(RegistrationStatus.INATIVO);
@@ -173,7 +165,6 @@ class SocialAuthenticationServiceTest {
 
         assertThat(response.user().id()).isEqualTo("usuario-1");
         assertThat(inactive.getStatus()).isEqualTo(RegistrationStatus.ATIVO);
-        verify(zeebeClient, never()).newPublishMessageCommand();
         verify(userRepository).save(inactive);
     }
 
