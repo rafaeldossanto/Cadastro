@@ -25,7 +25,9 @@ A ativação é um `UPDATE` condicional (`UserRepository.activateIfPending`): co
 
 ## Stack
 
-Spring Boot 4.0.6 · Java 21 · Spring Data JPA · OAuth2 Resource Server · Spring Mail · Flyway · Spring Retry · Lombok · logs JSON (logstash-logback-encoder).
+Spring Boot 4.0.6 · Java 21 · Spring Data JPA · OAuth2 Resource Server · Spring Mail · Flyway · Lombok · logs JSON (logstash-logback-encoder).
+
+> O retry do envio de email usa o `@Retryable` **nativo do Spring Framework 7** (`org.springframework.resilience`), não a lib `spring-retry` — que é da geração anterior e nem tem versão gerenciada no BOM do Boot 4. Zero dependência extra.
 
 ## Infra (compose.yaml)
 
